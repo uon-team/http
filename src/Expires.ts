@@ -10,12 +10,12 @@ export interface ExpiresOptions {
      * The number of seconds from now that the client should cache
      * the resource, without making a new request
      */
-    expiresIn?: number;
+    expiresIn: number;
 
     /**
      * Sets the Last-Modified header to the date specified
      */
-    lastModified?: Date;
+    lastModified: Date;
 }
 
 
@@ -27,11 +27,6 @@ export class Expires implements IOutgoingReponseModifier {
 
 
     readonly ifModifiedSince: Date;
-    readonly etag: string;
-
-    private _expiresInSeconds: number;
-    private _lastModified: Date;
-
     private _options: ExpiresOptions;
 
 
@@ -43,16 +38,10 @@ export class Expires implements IOutgoingReponseModifier {
             this.ifModifiedSince = new Date(req_date as string);
         }
 
-        // check for etag header
-        /* let etag = request.headers["etag"];
-         if (etag) {
-             this.etag = etag as string;
-         }
-         */
     }
 
     /**
-     * HttpTransform configure implementation
+     * Configure
      * @param options 
      */
     configure(options: ExpiresOptions) {

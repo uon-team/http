@@ -1,5 +1,5 @@
 
-import { InjectionToken } from '@uon/core';
+import { InjectionToken, Injectable } from '@uon/core';
 import { Router, MakeRouteHandlerDecorator, RouteHandlerData } from '@uon/router';
 
 
@@ -29,6 +29,12 @@ export interface HttpRoute extends RouteHandlerData {
      * The path to test
      */
     path: string;
+
+    /**
+     * A map of query fields to pre-validate and 
+     * coerse to types before calling the decorated method
+     */
+    query?: any;
 
 
 }

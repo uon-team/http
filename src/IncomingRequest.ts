@@ -1,8 +1,9 @@
+
+import { InjectionToken } from "@uon/core";
 import { IncomingMessage, IncomingHttpHeaders } from "http";
 import { Url, parse as UrlParse } from "url";
 import { TLSSocket } from "tls";
 import { Socket } from "net";
-import { InjectionToken } from "@uon/core";
 import { HttpError } from "./HttpError";
 
 // Injection token for the requst body configuration
@@ -37,6 +38,7 @@ export class IncomingRequest {
     private _clientIp: string;
     private _secure: boolean;
 
+   // private _query: any;
     private _body: Promise<Buffer>;
 
     constructor(private _request: IncomingMessage) {
