@@ -1,5 +1,5 @@
-import { Type, Injector, Provider, InjectionToken, GetTypeMetadata } from '@uon/core';
-import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard } from '@uon/router';
+import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable } from '@uon/core';
+import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService } from '@uon/router';
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders, STATUS_CODES } from 'http';
 import { Url } from 'url';
 
@@ -223,9 +223,16 @@ export class HttpContext {
         // iterate over all guards
         for (let i = 0; i < guards.length; ++i) {
 
-            // TODO handle non-service guards
-            let guard = await injector.instanciateAsync(guards[i]);
-            let result = await guard.checkGuard(ac);
+            let result: boolean = true;
+
+            if (IsInjectable(guards[i] as any)) {
+                let guard = await injector.instanciateAsync(guards[i] as Type<IRouteGuardService>);
+                result = await guard.checkGuard(ac);
+            }
+            else {
+                result = await (guards[i] as Function)(ac);
+            }
+
 
             if (!result) {
                 return false;
