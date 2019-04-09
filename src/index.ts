@@ -21,3 +21,6 @@ export * from './HttpServer';
 export * from './TlsProvider';
 export * from './Encoding';
 export * from './Range';
+
+export * from './Guards';
+export * from './Query';

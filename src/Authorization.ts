@@ -104,7 +104,7 @@ export class Authorization implements IOutgoingReponseModifier {
     }
 
     /**
-    * HttpTransform implemetation
+    * Configure response
     * @param response 
     */
     configure(opts: WWWAuthenticateConfig) {
@@ -114,7 +114,7 @@ export class Authorization implements IOutgoingReponseModifier {
     }
 
     /**
-     * HttpTransform implementation
+     * IOutgoingReponseModifier implementation
      * @param response 
      */
     async modifyResponse(response: OutgoingResponse) {

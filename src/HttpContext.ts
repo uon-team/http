@@ -1,4 +1,4 @@
-import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable } from '@uon/core';
+import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable, GetInjectionTokens } from '@uon/core';
 import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService } from '@uon/router';
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders, STATUS_CODES } from 'http';
 import { Url } from 'url';
@@ -249,6 +249,13 @@ export class HttpContext {
     private async processMatch(match: RouteMatch) {
 
         const ctrl = await this._injector.instanciateAsync(match.outlet);
+
+        // Internal debate : Should we call the handler with arguments like query, and body?
+        // It would be nice to have a typed query and body object from the QueryGuard and body guard
+        // It's maybe possible to just use an interface and do code gen at build time for validation, 
+        // with TS transformation API?
+        // However this would force users into using the @uon/cli builder. It would also increase 
+        // the compilers it's complexity and maintainabily effort.
 
         return ctrl[match.handler.methodKey]();
     }

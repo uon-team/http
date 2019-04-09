@@ -1,5 +1,6 @@
 import { OutgoingMessage, OutgoingHttpHeaders, ServerResponse } from "http";
 import { Writable, Stream, Readable } from "stream";
+import { ObjectUtils } from "@uon/core";
 
 
 export interface IOutgoingReponseModifier {
@@ -20,6 +21,11 @@ export interface JsonResponseConfig {
      */
     prefixOutput?: boolean;
 
+    /**
+     * Eliminate all keys not in the array
+     */
+    keep?: string[];
+
 }
 
 
@@ -34,6 +40,8 @@ export class OutgoingResponse {
     private _statusCode: number = 200;
     private _headers: OutgoingHttpHeaders = {};
 
+    private _finishing: boolean = false;
+
     /**
      * Creates a new server response wrapper
      * @param _response 
@@ -45,7 +53,7 @@ export class OutgoingResponse {
      */
     get sent() {
         return this._response
-            ? this._response.headersSent || this._response.finished
+            ? this._response.headersSent || this._response.finished || this._finishing
             : true;
     }
 
@@ -101,9 +109,17 @@ export class OutgoingResponse {
     /**
      * Sends some data and finalize the server response 
      */
-    send(data: Buffer | string | null) {
-        this._response.writeHead(this._statusCode, this._headers);
-        this._response.end(data);
+    async send(data: Buffer | string | null, encoding?: string) {
+
+        // create readable stream from data
+        let readable = new Readable();
+        readable.push(data, encoding);
+        data && readable.push(null);
+
+        // stream response
+        this.stream(readable);
+
+        return this.finish();
     }
 
     /**
@@ -130,10 +146,11 @@ export class OutgoingResponse {
 
         let result: string = typeof payload === 'string'
             ? payload
-            : JSON.stringify(payload, null, options.pretty ? '\t' : null);
+            : JSON.stringify(options.keep ? ObjectUtils.filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
 
+            
 
-        // prefix output if sepcified in options
+        // prefix output if specified in options
         if (options.prefixOutput) {
             result = ")]}',\n" + result;
         }
@@ -170,12 +187,16 @@ export class OutgoingResponse {
         this._modifiers.push(...transforms);
     }
 
-
     /**
      * Executes the pipeline until a response is sent
      */
     async finish() {
 
+        if (this._finishing) {
+            return;
+        }
+
+        this._finishing = true;
 
         for (let i = 0; i < this._modifiers.length; ++i) {
 
@@ -203,6 +224,5 @@ export class OutgoingResponse {
 
 
     }
-
 
 }

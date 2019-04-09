@@ -6,26 +6,8 @@ import { TLSSocket } from "tls";
 import { Socket } from "net";
 import { HttpError } from "./HttpError";
 
-// Injection token for the requst body configuration
-export const HTTP_REQUEST_BODY_CONFIG = new InjectionToken<IncomingRequestBodyConfig>("HTTP_REQUEST_BODY_CONFIG");
 
 
-/**
- * Configuration options for the request body
- */
-export interface IncomingRequestBodyConfig {
-
-    /**
-     *  the maximum acceptable body size, in bytes
-     */
-    maxLength?: number;
-
-    /**
-     * Which content type (mime) is accepted 
-     */
-    accept?: string[];
-
-}
 
 
 /**
@@ -109,34 +91,6 @@ export class IncomingRequest {
         }
 
         return this._body;
-    }
-
-    /**
-     * Validate the incoming request in respect to the request body and headers
-     */
-    validate(config: IncomingRequestBodyConfig) {
-        // we need a length from the headers
-
-        if (config.accept) {
-            if (config.accept.indexOf(this.headers['content-type']) === -1) {
-                throw new HttpError(400, new Error(`Content-Type must be set to (one of) ${config.accept.join(', ')}.`));
-            }
-        }
-
-        // check if content-length is bigger than the max allowed body size
-        if (config.maxLength) {
-
-            let header_length_str = this.headers['content-length'];
-            if (!header_length_str) {
-                throw new HttpError(411, new Error(`Content-Length header field must be set.`));
-            }
-
-            let header_length = parseInt(header_length_str);
-            if (header_length > config.maxLength) {
-                throw new HttpError(413, new Error(`Content-Length of ${header_length} exceeds the limit of ${config.maxLength}.`));
-            }
-        }
-
     }
 
     /**

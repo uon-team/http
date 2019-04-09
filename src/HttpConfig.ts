@@ -6,8 +6,9 @@ import { Authorization } from './Authorization';
 import { Encoding } from './Encoding';
 import { Range } from './Range';
 
-import { HTTP_REQUEST_BODY_CONFIG, IncomingRequestBodyConfig } from './IncomingRequest';
+import { IncomingRequest } from './IncomingRequest';
 import { HTTP_ERROR_HANDLER, DefaultHttpErrorHandler } from './ErrorHandler';
+import { Query } from './Query';
 
 // the unique http config token
 export const HTTP_CONFIG = new InjectionToken<HttpConfig>('HTTP_CONFIG');
@@ -53,13 +54,13 @@ export const HTTP_CONFIG_DEFAULTS: HttpConfig = {
  */
 export const DEFAULT_CONTEXT_PROVIDERS = Object.freeze(<Provider[]>[
 
-    // request body config
+    // shortcut to parsed query string, if QueryGuard is used, field types are coersed
     {
-        token: HTTP_REQUEST_BODY_CONFIG,
-        value: <IncomingRequestBodyConfig>{
-            maxLength: 1 * 1024 * 1024, // 1MB
-            accept: ['*/*']
-        }
+        token: Query,
+        factory: (request: IncomingRequest) => {
+            return Object.assign(new Query(), request.uri.query);
+        }, 
+        deps: [IncomingRequest]
     },
 
     // cookies support
@@ -73,23 +74,10 @@ export const DEFAULT_CONTEXT_PROVIDERS = Object.freeze(<Provider[]>[
 
     // encoding support
     Encoding,
-    /*{
-        token: HTTP_ENCODING_CONFIG,
-        value: <HttpEncodingConfig>{
-            extensions: ['js', 'css'],
-            storageAdapter: null
-        }
-    },
-*/
+
     // range support
     Range,
-    /*{
-        token: HTTP_RANGE_CONFIG,
-        value: <HttpRangeConfig>{
-            maxChunkSize: 10 * 1024 * 1024, // 10MB
-        }
-    },
-*/
+
     // default error handler
     ProvideInjectable(HTTP_ERROR_HANDLER, DefaultHttpErrorHandler)
 
