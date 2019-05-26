@@ -1,11 +1,9 @@
-import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable, GetInjectionTokens } from '@uon/core';
-import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService } from '@uon/router';
+import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable, GetInjectionTokens, THROW_IF_NOT_FOUND } from '@uon/core';
+import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService, RouteParams } from '@uon/router';
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders, STATUS_CODES } from 'http';
 import { Url } from 'url';
 
 import { HttpError } from './HttpError';
-import { DEFAULT_CONTEXT_PROVIDERS } from './HttpConfig';
-
 import { OutgoingResponse } from './OutgoingResponse';
 import { IncomingRequest } from './IncomingRequest';
 import { HttpErrorHandler, HTTP_ERROR_HANDLER } from './ErrorHandler';
@@ -137,6 +135,10 @@ export class HttpContext {
         // else use the defined HttpErrorHandler
         const handler: HttpErrorHandler = this._injector.get<HttpErrorHandler>(HTTP_ERROR_HANDLER);
 
+        if(error.error) {
+            console.error(error.error);
+        }
+        
         await handler.send(error);
 
     }
@@ -211,7 +213,7 @@ export class HttpContext {
 
     /**
      * Call route guards sequentially, 
-     * rejects when the first guards returns false
+     * returns false when a guard returns false
      * @param guards 
      * @param injector 
      */
@@ -248,16 +250,33 @@ export class HttpContext {
      */
     private async processMatch(match: RouteMatch) {
 
+        // instaciate controller
         const ctrl = await this._injector.instanciateAsync(match.outlet);
 
-        // Internal debate : Should we call the handler with arguments like query, and body?
-        // It would be nice to have a typed query and body object from the QueryGuard and body guard
-        // It's maybe possible to just use an interface and do code gen at build time for validation, 
-        // with TS transformation API?
-        // However this would force users into using the @uon/cli builder. It would also increase 
-        // the compilers it's complexity and maintainabily effort.
+        // do DI on method arguments
+        const deps = await this.instanciateHandlerDependencies(match);
 
-        return ctrl[match.handler.methodKey]();
+        // call the handler
+        return ctrl[match.handler.methodKey](...deps);
+    }
+
+    /**
+     * Instaciates dependencies declared as method arguments
+     * @param match 
+     */
+    private async instanciateHandlerDependencies(match: RouteMatch) {
+
+        const injector = this._injector;
+        const dep_records = match.handler.dependencies;
+        const deps: any[] = [];
+
+        for (let i = 0, l = dep_records.length; i < l; ++i) {
+            const it = dep_records[i];
+            const val = await injector.getAsync(it.token, it.optional ? null : THROW_IF_NOT_FOUND);
+            deps.push(val);
+        }
+
+        return deps;
     }
 
 
@@ -286,14 +305,20 @@ export class HttpContext {
 
 
         // append all extra providers
-        providers = providers.concat(DEFAULT_CONTEXT_PROVIDERS as Provider[], this._providers);
+        providers = providers.concat(this._providers);
 
 
         // append match providers
         if (match) {
+
+            const activated = match.toActivatedRoute();
             providers.push({
                 token: ActivatedRoute,
-                value: match.toActivatedRoute()
+                value: activated
+            },
+            {
+                token: RouteParams,
+                value: activated.params
             });
 
             // get controller specific providers

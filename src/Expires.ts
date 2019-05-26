@@ -10,12 +10,12 @@ export interface ExpiresOptions {
      * The number of seconds from now that the client should cache
      * the resource, without making a new request
      */
-    expiresIn: number;
+    expiresIn?: number;
 
     /**
      * Sets the Last-Modified header to the date specified
      */
-    lastModified: Date;
+    lastModified?: Date;
 }
 
 

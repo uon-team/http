@@ -1,6 +1,6 @@
 import { OutgoingMessage, OutgoingHttpHeaders, ServerResponse } from "http";
 import { Writable, Stream, Readable } from "stream";
-import { ObjectUtils } from "@uon/core";
+import { ObjectUtils, ArrayUtils } from "@uon/core";
 
 
 export interface IOutgoingReponseModifier {
@@ -53,7 +53,7 @@ export class OutgoingResponse {
      */
     get sent() {
         return this._response
-            ? this._response.headersSent || this._response.finished || this._finishing
+            ? this._response.headersSent || this._response.finished
             : true;
     }
 
@@ -111,13 +111,17 @@ export class OutgoingResponse {
      */
     async send(data: Buffer | string | null, encoding?: string) {
 
-        // create readable stream from data
-        let readable = new Readable();
-        readable.push(data, encoding);
-        data && readable.push(null);
 
-        // stream response
-        this.stream(readable);
+        if (data) {
+            // create readable stream from data
+            let readable = new Readable();
+            readable.push(data, encoding);
+            data && readable.push(null);
+
+            // stream response
+            this.stream(readable);
+        }
+
 
         return this.finish();
     }
@@ -148,7 +152,7 @@ export class OutgoingResponse {
             ? payload
             : JSON.stringify(options.keep ? ObjectUtils.filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
 
-            
+
 
         // prefix output if specified in options
         if (options.prefixOutput) {
@@ -184,7 +188,11 @@ export class OutgoingResponse {
      * @param transform 
      */
     use(...transforms: IOutgoingReponseModifier[]) {
-        this._modifiers.push(...transforms);
+
+        transforms.forEach((t) => {
+            ArrayUtils.include(this._modifiers, t);
+        });
+
     }
 
     /**
@@ -215,7 +223,6 @@ export class OutgoingResponse {
             this._inputStream.pipe(this._response);
         }
         else {
-
             // no content
             this._response.writeHead(204, this._headers);
             this._response.end();

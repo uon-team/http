@@ -1,6 +1,6 @@
 
 
-import { Injectable, Inject, Optional, EventSource, Injector, Provider, InjectionToken } from '@uon/core';
+import { Injectable, Inject, Optional, EventSource, Injector, Provider, InjectionToken, ArrayUtils } from '@uon/core';
 import { Router } from '@uon/router';
 
 import { Server, IncomingMessage, ServerResponse } from 'http';
@@ -10,7 +10,7 @@ import { parse as ParseUrl } from 'url';
 
 
 import { HttpContext } from './HttpContext';
-import { HttpConfig, HTTP_CONFIG } from './HttpConfig';
+import { HttpConfig, HTTP_CONFIG, HTTP_PROVIDERS } from './HttpConfig';
 import { HttpError } from './HttpError';
 import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, MatchMethodFunc, HttpRoute } from './HttpRouter';
 
@@ -31,12 +31,27 @@ export class HttpServer extends EventSource {
     private _http: Server;
     private _https: https.Server;
 
+    private _contextProviders: Provider[];
+
     constructor(private injector: Injector,
         @Inject(HTTP_CONFIG) private config: HttpConfig,
+        @Inject(HTTP_PROVIDERS) extraProviders: Provider[][],
         @Optional() @Inject(HTTP_TLS_PROVIDER) private tlsProvider: TLSProvider,
     ) {
 
         super();
+
+        // flatten providers
+        const providers: Provider[] = [].concat(config.providers);
+
+        for(let i = 0; i < extraProviders.length; ++i) {
+            let provider_list = extraProviders[i];
+            for(let j = 0; j < provider_list.length; ++j) {
+                providers.push(provider_list[j]);
+            }
+        }
+
+        this._contextProviders = providers;
 
     }
 
@@ -200,7 +215,7 @@ export class HttpServer extends EventSource {
         // create a new context
         const http_context = new HttpContext({
             injector: this.injector,
-            providers: this.config.providers,
+            providers: this._contextProviders,
             req: req,
             res: res
         });

@@ -8,10 +8,16 @@ import { Range } from './Range';
 
 import { IncomingRequest } from './IncomingRequest';
 import { HTTP_ERROR_HANDLER, DefaultHttpErrorHandler } from './ErrorHandler';
-import { Query } from './Query';
+import { RequestQuery } from './Query';
+import { JsonBody } from './Body';
 
 // the unique http config token
 export const HTTP_CONFIG = new InjectionToken<HttpConfig>('HTTP_CONFIG');
+
+
+// Extra providers for an HttpContext
+export const HTTP_PROVIDERS = new InjectionToken<Provider[]>('HTTP_PROVIDERS');
+
 
 /**
  * The http config options
@@ -56,9 +62,9 @@ export const DEFAULT_CONTEXT_PROVIDERS = Object.freeze(<Provider[]>[
 
     // shortcut to parsed query string, if QueryGuard is used, field types are coersed
     {
-        token: Query,
+        token: RequestQuery,
         factory: (request: IncomingRequest) => {
-            return Object.assign(new Query(), request.uri.query);
+            return Object.assign(new RequestQuery(), request.uri.query);
         }, 
         deps: [IncomingRequest]
     },
@@ -77,6 +83,9 @@ export const DEFAULT_CONTEXT_PROVIDERS = Object.freeze(<Provider[]>[
 
     // range support
     Range,
+
+    // json body
+    JsonBody,
 
     // default error handler
     ProvideInjectable(HTTP_ERROR_HANDLER, DefaultHttpErrorHandler)

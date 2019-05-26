@@ -22,5 +22,5 @@ export * from './TlsProvider';
 export * from './Encoding';
 export * from './Range';
 
-export * from './Guards';
+export * from './Body';
 export * from './Query';

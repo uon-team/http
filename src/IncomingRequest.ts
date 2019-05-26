@@ -68,6 +68,13 @@ export class IncomingRequest {
     }
 
     /**
+     * The user agent as it appears in the request headers
+     */
+    get userAgent() {
+        return this._request.headers['user-agent'];
+    }
+
+    /**
      * The http version
      */
     get httpVersion() {
@@ -82,7 +89,7 @@ export class IncomingRequest {
     }
 
     /**
-     * Get the request body
+     * Get the request body buffer as a promise
      */
     get body(): Promise<Buffer> {
 

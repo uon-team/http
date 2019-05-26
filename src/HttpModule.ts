@@ -3,7 +3,7 @@ import { Module, ModuleWithProviders, ObjectUtils, APP_INITIALIZER } from '@uon/
 import { Router } from '@uon/router';
 
 import { HttpServer } from './HttpServer';
-import { HttpConfig, HTTP_CONFIG, HTTP_CONFIG_DEFAULTS } from './HttpConfig';
+import { HttpConfig, HTTP_CONFIG, HTTP_CONFIG_DEFAULTS, HTTP_PROVIDERS, DEFAULT_CONTEXT_PROVIDERS } from './HttpConfig';
 import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, HttpRoute } from './HttpRouter';
 
 
@@ -56,7 +56,12 @@ export class HttpModule {
                 {
                     token: HTTP_CONFIG,
                     value: merged_config
-                }
+                },
+                {
+                    token: HTTP_PROVIDERS,
+                    value: DEFAULT_CONTEXT_PROVIDERS,
+                    multi: true
+                },
 
             ]
         }

@@ -18,18 +18,24 @@ export class HttpError extends Error {
     readonly error: Error;
 
     /**
+     * Some data attached to the HttpError
+     */
+    readonly data: any;
+
+    /**
      * 
      * @param code 
      * @param message 
      * @param body 
      */
-    constructor(code: number, originalError?: Error) {
+    constructor(code: number, originalError?: Error, data?: any) {
 
-        let msg = STATUS_CODES[code];
+        const msg = STATUS_CODES[code];
         super(originalError ? originalError.message : msg);
 
         this.code = code;
         this.error = originalError;
+        this.data = data;
     }
 
     toJSON() {
