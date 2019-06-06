@@ -16,11 +16,12 @@ export const HTTP_ERROR_HANDLER = new InjectionToken<HttpErrorHandler>("HTTP_ERR
  */
 export interface HttpErrorHandler {
 
-    send(error: HttpError): void;
+    send(error: HttpError): void | Promise<void>;
 }
 
 /**
  * The default error handler controller
+ * Send error message as plain text
  */
 @Injectable()
 export class DefaultHttpErrorHandler implements HttpErrorHandler {
@@ -31,10 +32,9 @@ export class DefaultHttpErrorHandler implements HttpErrorHandler {
 
 
     send(err: HttpError) {
-
         this.res.setHeader('Content-Type', 'text/plain');
         this.res.statusCode = err.code;
-        this.res.send(err.message);
+        return this.res.send(err.message);
     }
 
 

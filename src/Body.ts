@@ -1,5 +1,5 @@
 
-import { Type, Injectable, IsType } from '@uon/core';
+import { Type, Injectable, IsType, PropertyNamesNotOfType } from '@uon/core';
 import { IRouteGuardService, ActivatedRoute } from '@uon/router';
 import { FindModelAnnotation, JsonSerializer, Model, Validate, ValidationResult, Validator } from '@uon/model';
 
@@ -37,39 +37,13 @@ export function BodyGuard(config: BodyGuardConfig) {
 
         checkGuard(ar: ActivatedRoute<any>): boolean | Promise<boolean> {
 
-            this.checkHeaders();
+            this.checkHeaders(config);
 
 
             return true;
         }
 
-        checkHeaders() {
 
-            // we need a content-type from the headers
-            if (config.accept) {
-
-                // literal check
-                // TODO check for wildcards also
-                if (config.accept.indexOf(this.request.headers['content-type']) === -1) {
-                    throw new HttpError(400, new Error(`Content-Type must be set to (one of) ${config.accept.join(', ')}.`));
-                }
-            }
-
-            // check if content-length is bigger than the max allowed body size
-            if (config.maxLength) {
-
-                let header_length_str = this.request.headers['content-length'];
-                if (!header_length_str) {
-                    throw new HttpError(411, new Error(`Content-Length header field must be set.`));
-                }
-
-                let header_length = parseInt(header_length_str);
-                if (header_length > config.maxLength) {
-                    throw new HttpError(413, new Error(`Content-Length of ${header_length} exceeds the limit of ${config.maxLength}.`));
-                }
-            }
-
-        }
     };
 
 }
@@ -109,13 +83,17 @@ export class JsonBody<T = any> {
 }
 
 
-export interface JsonBodyGuardOptions {
+export type JsonBodyGuardValidate<T, M = Pick<T, PropertyNamesNotOfType<T, Function>>> = {
+    [K in keyof M]?: Validator[]
+} & { [k: string]: Validator[] }
+
+export interface JsonBodyGuardOptions<T> {
 
     /**
      * Extra validation on top of model validation.
      * Can be used if no model is provided.
      */
-    validate?: { [k: string]: Validator[] };
+    validate?: JsonBodyGuardValidate<T>;
 
     /**
      * Throws a 400 http error on validation failure if set to true.
@@ -124,6 +102,12 @@ export interface JsonBodyGuardOptions {
      * Defaults to true. 
      */
     throwOnValidation?: boolean;
+
+
+    /**
+     * Maximum body size in bytes
+     */
+    maxLength?: number;
 }
 
 
@@ -132,7 +116,7 @@ export interface JsonBodyGuardOptions {
  * A guard for validating a JSON request body
  * @param options 
  */
-export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions = {}) {
+export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T> = {}) {
 
 
     let model_meta: Model;
@@ -151,6 +135,10 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions =
 
         async checkGuard(ar: ActivatedRoute<any>): Promise<boolean> {
 
+            this.checkHeaders({ 
+                accept: ['application/json'],
+                maxLength: options ? options.maxLength : undefined
+            });
 
             const json_body: any = this.jsonBody;
             // wait for body
@@ -191,7 +179,36 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions =
 
 @Injectable()
 export class BodyGuardService {
+
     constructor(public request: IncomingRequest, public jsonBody: JsonBody) { }
+
+    checkHeaders(config: BodyGuardConfig) {
+
+        // we need a content-type from the headers
+        if (config.accept) {
+
+            // literal check
+            // TODO check for wildcards also
+            if (config.accept.indexOf(this.request.headers['content-type']) === -1) {
+                throw new HttpError(400, new Error(`Content-Type must be set to (one of) ${config.accept.join(', ')}.`));
+            }
+        }
+
+        // check if content-length is bigger than the max allowed body size
+        if (config.maxLength) {
+
+            let header_length_str = this.request.headers['content-length'];
+            if (!header_length_str) {
+                throw new HttpError(411, new Error(`Content-Length header field must be set.`));
+            }
+
+            let header_length = parseInt(header_length_str);
+            if (header_length > config.maxLength) {
+                throw new HttpError(413, new Error(`Content-Length of ${header_length} exceeds the limit of ${config.maxLength}.`));
+            }
+        }
+
+    }
 }
 
 

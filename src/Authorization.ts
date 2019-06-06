@@ -54,8 +54,6 @@ export class Authorization implements IOutgoingReponseModifier {
             // assign raw token
             this._token = token_str;
 
-
-
         }
 
     }

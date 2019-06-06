@@ -183,42 +183,42 @@ export class Cookies implements IOutgoingReponseModifier {
         }
 
         // url encode the value
-        let value = encodeURIComponent(val);
+        const value = encodeURIComponent(val);
 
         // check for invalid chars in value
         if (!INVALID_CHAR_TEST.test(value)) {
             throw new Error(`Cannot set cookie ${name}, the value contains invalid characters.`);
         }
 
-        let result = name + '=' + value;
-
+        // start with name=value
+        const cookie_parts = [`${name}=${value}`];
 
         if (options.maxAge) {
-            result += '; Max-Age=' + Math.floor(options.maxAge);
+            cookie_parts.push(`Max-Age=${Math.floor(options.maxAge)}`);
         }
 
         if (options.expires) {
-            result += `; Expires=${options.expires.toUTCString()}`;
+            cookie_parts.push(`Expires=${options.expires.toUTCString()}`);
         }
 
         if (options.httpOnly) {
-            result += '; HttpOnly';
+            cookie_parts.push(`HttpOnly`);
         }
 
         if (options.secure) {
-            result += '; Secure';
+            cookie_parts.push(`Secure`);
         }
 
         if (options.path) {
-            result += `; Path=${options.path}`;
+            cookie_parts.push(`Path=${options.path}`);
         }
 
         if (options.domain) {
-            result += `; Domain=${options.domain}`;
+            cookie_parts.push(`Domain=${options.domain}`);
         }
 
 
-        return result;
+        return cookie_parts.join('; ');
     }
 
 }

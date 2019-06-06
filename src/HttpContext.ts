@@ -135,10 +135,10 @@ export class HttpContext {
         // else use the defined HttpErrorHandler
         const handler: HttpErrorHandler = this._injector.get<HttpErrorHandler>(HTTP_ERROR_HANDLER);
 
-        if(error.error) {
+        if (error.error) {
             console.error(error.error);
         }
-        
+
         await handler.send(error);
 
     }
@@ -312,14 +312,16 @@ export class HttpContext {
         if (match) {
 
             const activated = match.toActivatedRoute();
-            providers.push({
-                token: ActivatedRoute,
-                value: activated
-            },
-            {
-                token: RouteParams,
-                value: activated.params
-            });
+            providers.push(
+                {
+                    token: ActivatedRoute,
+                    value: activated
+                },
+                {
+                    token: RouteParams,
+                    value: activated.params
+                }
+            );
 
             // get controller specific providers
             let controller_meta: RouterOutlet = GetTypeMetadata(match.outlet).filter(t => t instanceof RouterOutlet)[0];

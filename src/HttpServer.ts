@@ -232,7 +232,7 @@ export class HttpServer extends EventSource {
             // emit the request event first
             await this.emit('request', http_context);
 
-            // process the match
+            // execute the http context
             await http_context.process(match);
 
             // make sure a response was sent
@@ -264,11 +264,8 @@ export class HttpServer extends EventSource {
 
             }
 
-
-
         }
-
-
+        
     }
 
     /**
