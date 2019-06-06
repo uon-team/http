@@ -1,5 +1,5 @@
 
-import { Type, Injectable, IsType, PropertyNamesNotOfType } from '@uon/core';
+import { Type, Injectable, IsType, PropertyNamesNotOfType, Injector } from '@uon/core';
 import { IRouteGuardService, ActivatedRoute } from '@uon/router';
 import { FindModelAnnotation, JsonSerializer, Model, Validate, ValidationResult, Validator } from '@uon/model';
 
@@ -38,7 +38,6 @@ export function BodyGuard(config: BodyGuardConfig) {
         checkGuard(ar: ActivatedRoute<any>): boolean | Promise<boolean> {
 
             this.checkHeaders(config);
-
 
             return true;
         }
@@ -160,7 +159,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             }
 
             // run validation
-            const validation_result = await Validate(this.jsonBody.value, options.validate);
+            const validation_result = await Validate(this.jsonBody.value, options.validate, this.injector);
             json_body._validation = validation_result;
 
 
@@ -180,7 +179,9 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 @Injectable()
 export class BodyGuardService {
 
-    constructor(public request: IncomingRequest, public jsonBody: JsonBody) { }
+    constructor(public request: IncomingRequest, 
+        public jsonBody: JsonBody,
+        public injector: Injector) { }
 
     checkHeaders(config: BodyGuardConfig) {
 
