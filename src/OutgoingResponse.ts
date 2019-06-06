@@ -148,30 +148,36 @@ export class OutgoingResponse {
      */
     json(payload: any, options: JsonResponseConfig = {}) {
 
-        let result: string = typeof payload === 'string'
-            ? payload
-            : JSON.stringify(options.keep ? ObjectUtils.filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
 
+        const func = async (res: OutgoingResponse) => {
 
+            let result: string = typeof payload === 'string'
+                ? payload
+                : JSON.stringify(options.keep ? ObjectUtils.filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
 
-        // prefix output if specified in options
-        if (options.prefixOutput) {
-            result = ")]}',\n" + result;
-        }
+            // prefix output if specified in options
+            if (options.prefixOutput) {
+                result = ")]}',\n" + result;
+            }
 
-        // set content type to json
-        this.setHeader('Content-Type', 'application/json');
+            // set content type to json
+            this.setHeader('Content-Type', 'application/json');
 
-        // specify length also
-        this.setHeader('Content-Length', Buffer.byteLength(result));
+            // specify length also
+            this.setHeader('Content-Length', Buffer.byteLength(result));
 
-        // create readable stream from json string
-        let readable = new Readable();
-        readable.push(result);
-        readable.push(null);
+            // create readable stream from json string
+            let readable = new Readable();
+            readable.push(result);
+            readable.push(null);
 
-        // stream response
-        this.stream(readable);
+            // stream response
+            this.stream(readable);
+        };
+
+        this.use(
+            new ClosureResponseModifer(func)
+        );
 
     }
 
@@ -224,12 +230,25 @@ export class OutgoingResponse {
         }
         else {
             // no content
-            this._response.writeHead(204, this._headers);
+            // if status code was unmodified, set to 204, else just use it as is
+            this.statusCode = this._statusCode === 200 ? 204 : this._statusCode;
+            this._response.writeHead(this.statusCode, this._headers);
             this._response.end();
 
         }
 
 
+    }
+
+}
+
+
+class ClosureResponseModifer implements IOutgoingReponseModifier {
+
+    constructor(private func: (res: OutgoingResponse) => Promise<any>) { }
+
+    modifyResponse(res: OutgoingResponse): Promise<any> {
+        return this.func(res);
     }
 
 }
