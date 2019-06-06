@@ -11,7 +11,7 @@ import { HttpErrorHandler, HTTP_ERROR_HANDLER } from './ErrorHandler';
 /**
  * Multi provider token for upgrade handlers
  */
-export const HTTP_UPGRADE_HANDLER = new InjectionToken<HttpUpgradeHandler<any>>("HTTP_UPGRADE_HANDLER");
+export const HTTP_UPGRADE_HANDLER = new InjectionToken<HttpUpgradeHandler<any>[]>("HTTP_UPGRADE_HANDLER");
 
 /**
  * Declares a handler for http upgrades
@@ -135,6 +135,7 @@ export class HttpContext {
         // else use the defined HttpErrorHandler
         const handler: HttpErrorHandler = this._injector.get<HttpErrorHandler>(HTTP_ERROR_HANDLER);
 
+        // FIXME should be dev only
         if (error.error) {
             console.error(error.error);
         }
