@@ -42,7 +42,7 @@ export class HttpServer extends EventSource {
         super();
 
         // flatten providers
-        const providers: Provider[] = [].concat(config.providers);
+        const providers: Provider[] = [];
 
         for(let i = 0; i < extraProviders.length; ++i) {
             let provider_list = extraProviders[i];
@@ -51,7 +51,7 @@ export class HttpServer extends EventSource {
             }
         }
 
-        this._contextProviders = providers;
+        this._contextProviders = providers.concat(config.providers);
 
     }
 
