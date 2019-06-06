@@ -88,7 +88,10 @@ export const DEFAULT_CONTEXT_PROVIDERS = Object.freeze(<Provider[]>[
     JsonBody,
 
     // default error handler
-    ProvideInjectable(HTTP_ERROR_HANDLER, DefaultHttpErrorHandler)
+    {
+        token: HTTP_ERROR_HANDLER,
+        type: DefaultHttpErrorHandler
+    }
 
 ]);
 
