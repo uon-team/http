@@ -217,7 +217,8 @@ export class HttpServer extends EventSource {
             injector: this.injector,
             providers: this._contextProviders,
             req: req,
-            res: res
+            res: res,
+            traceErrors: this.config.traceContextErrors
         });
 
         const pathname = ParseUrl(req.url, false).pathname;

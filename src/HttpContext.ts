@@ -1,5 +1,5 @@
 import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable, GetInjectionTokens, THROW_IF_NOT_FOUND } from '@uon/core';
-import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService, RouteParams } from '@uon/router';
+import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService, RouteParams, RouteData } from '@uon/router';
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders, STATUS_CODES } from 'http';
 import { Url } from 'url';
 
@@ -43,6 +43,11 @@ export interface HttpContextOptions {
     // optional head buffer used in upgrade
     head?: Buffer;
 
+    /**
+     * Whether to console.trace error generated from outlets
+     */
+    traceErrors?: boolean;
+
 }
 
 /**
@@ -63,6 +68,8 @@ export class HttpContext {
     private _processing: boolean = false;
 
 
+    private _traceErrors: boolean = false;
+
     /**
      * Creates a new context for the isolated request specific app
      * @param req 
@@ -77,6 +84,7 @@ export class HttpContext {
         this.response = new OutgoingResponse(options.res);
 
         this.head = options.head;
+        this._traceErrors = !!options.traceErrors;
     }
 
     /**
@@ -98,8 +106,11 @@ export class HttpContext {
             throw new HttpError(404);
         }
 
+        // do data resolve
+        await match.resolveData(this._injector);
+
         // process route guards
-        const guard_pass = await this.processRouteGuards(match.guards);
+        const guard_pass = await match.checkGuards(this._injector);
 
         // Guards can send a response too you know
         if (this.response.sent) {
@@ -113,8 +124,8 @@ export class HttpContext {
 
         }
 
-        // process match
-        return await this.processMatch(match);
+        // finally call handler
+        return await match.callHandler(this._injector);
 
     }
 
@@ -135,8 +146,7 @@ export class HttpContext {
         // else use the defined HttpErrorHandler
         const handler: HttpErrorHandler = this._injector.get<HttpErrorHandler>(HTTP_ERROR_HANDLER);
 
-        // FIXME should be dev only
-        if (error.error) {
+        if (this._traceErrors && error.error) {
             console.error(error.error);
         }
 
@@ -212,74 +222,6 @@ export class HttpContext {
         socket.destroy();
     }
 
-    /**
-     * Call route guards sequentially, 
-     * returns false when a guard returns false
-     * @param guards 
-     * @param injector 
-     */
-    private async processRouteGuards(guards: RouteGuard[]) {
-
-        const injector = this._injector;
-        const ac: ActivatedRoute = injector.get(ActivatedRoute);
-
-        // iterate over all guards
-        for (let i = 0; i < guards.length; ++i) {
-
-            let result: boolean = true;
-
-            if (IsInjectable(guards[i] as any)) {
-                let guard = await injector.instanciateAsync(guards[i] as Type<IRouteGuardService>);
-                result = await guard.checkGuard(ac);
-            }
-            else {
-                result = await (guards[i] as Function)(ac);
-            }
-
-
-            if (!result) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Instanciate the controller and call the handler method
-     * @param match 
-     */
-    private async processMatch(match: RouteMatch) {
-
-        // instaciate controller
-        const ctrl = await this._injector.instanciateAsync(match.outlet);
-
-        // do DI on method arguments
-        const deps = await this.instanciateHandlerDependencies(match);
-
-        // call the handler
-        return ctrl[match.handler.methodKey](...deps);
-    }
-
-    /**
-     * Instaciates dependencies declared as method arguments
-     * @param match 
-     */
-    private async instanciateHandlerDependencies(match: RouteMatch) {
-
-        const injector = this._injector;
-        const dep_records = match.handler.dependencies;
-        const deps: any[] = [];
-
-        for (let i = 0, l = dep_records.length; i < l; ++i) {
-            const it = dep_records[i];
-            const val = await injector.getAsync(it.token, it.optional ? null : THROW_IF_NOT_FOUND);
-            deps.push(val);
-        }
-
-        return deps;
-    }
-
 
     /**
      * Get the provider list for this context's injector
@@ -321,6 +263,10 @@ export class HttpContext {
                 {
                     token: RouteParams,
                     value: activated.params
+                },
+                {
+                    token: RouteData,
+                    value: activated.data
                 }
             );
 

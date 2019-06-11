@@ -206,12 +206,16 @@ export class OutgoingResponse {
      */
     async finish() {
 
+        // prevent this from being executed twice
+        // this can happen when a modifier uses send() 
+        // inside it's modifyResponse method
         if (this._finishing) {
             return;
         }
-
         this._finishing = true;
 
+
+        // execute all modifiers up until a response is sent
         for (let i = 0; i < this._modifiers.length; ++i) {
 
             if (this.sent) {

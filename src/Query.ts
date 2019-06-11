@@ -59,6 +59,7 @@ export function QueryGuard(queryDef: QueryDefinition) {
 
             const validate_keys = Object.keys(queryDef);
             const errors: string[] = [];
+            const error_data: any = {};
 
             for (let i = 0; i < validate_keys.length; ++i) {
                 let k = validate_keys[i];
@@ -68,6 +69,7 @@ export function QueryGuard(queryDef: QueryDefinition) {
 
                 // check the required fields
                 if (queryDef[k].required && !original_query[k]) {
+                    error_data[k] = 'required';
                     errors.push(`Query field "${k}" is required.`);
                     continue;
                 }
@@ -75,6 +77,7 @@ export function QueryGuard(queryDef: QueryDefinition) {
                 // check for regex match
                 if (queryDef[k].match && original_query[k]) {
                     if (!queryDef[k].match.test(original_query[k])) {
+                        error_data[k] = 'patternMismatch';
                         errors.push(`Query field "${k}" doesn't match ${queryDef[k].match.toString()}.`);
                         continue;
                     }
@@ -95,7 +98,7 @@ export function QueryGuard(queryDef: QueryDefinition) {
             }
 
             if (errors.length) {
-                throw new HttpError(400, new Error(errors.join('\r\n')));
+                throw new HttpError(400, new Error(errors.join('\r\n')), { queryError: error_data });
             }
 
             return true;
