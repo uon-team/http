@@ -1,7 +1,7 @@
 
-import { Type, Injectable, IsType, PropertyNamesNotOfType, Injector } from '@uon/core';
+import { Type, Injectable, IsType, PropertyNamesNotOfType, Injector, Unpack } from '@uon/core';
 import { IRouteGuardService, ActivatedRoute } from '@uon/router';
-import { FindModelAnnotation, JsonSerializer, Model, Validate, ValidationResult, Validator } from '@uon/model';
+import { FindModelAnnotation, JsonSerializer, Model, Validate, ValidationResult, Validator, ValidationFailure } from '@uon/model';
 
 import { IncomingRequest } from './IncomingRequest';
 import { HttpError } from './HttpError';
@@ -94,10 +94,18 @@ export interface JsonBodyGuardOptions<T> {
      */
     validate?: JsonBodyGuardValidate<T>;
 
+
+    /**
+     * If set, validate the body is an array, and validates each element 
+     * with the provided validators in 'validate'
+     */
+    validateArray?: boolean;
+
+
     /**
      * Throws a 400 http error on validation failure if set to true.
      * Otherwise you have to handle the validation failure yourself.
-     * Validation results are store in JsonBody.
+     * Validation results are stored in JsonBody.
      * Defaults to true. 
      */
     throwOnValidation?: boolean;
@@ -134,7 +142,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 
         async checkGuard(ar: ActivatedRoute<any>): Promise<boolean> {
 
-            this.checkHeaders({ 
+            this.checkHeaders({
                 accept: ['application/json'],
                 maxLength: options ? options.maxLength : undefined
             });
@@ -148,7 +156,9 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             try {
 
                 const obj = JSON.parse(buffer.toString('utf8'));
-                const result = type ? serializer.deserialize(obj) : obj;
+                const result = type 
+                    ? (Array.isArray(obj) ? (obj as any[]).map(o => serializer.deserialize(o)) 
+                    : serializer.deserialize(obj)) : obj;
 
                 // assign data to the JsonBody provider
                 json_body._data = result;
@@ -158,16 +168,29 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
                 return false;
             }
 
-            // run validation
-            const validation_result = await Validate(this.jsonBody.value, options.validate, this.injector);
-            json_body._validation = validation_result;
-
-
-            if (options.throwOnValidation !== false && !validation_result.valid) {
-                throw new HttpError(400,
-                    new Error(validation_result.failures.map(f => f.reason).join('\r\n')),
-                    validation_result);
+            // validate is array
+            const is_array = Array.isArray(this.jsonBody.value);
+            if (options.validateArray === true && !is_array) {
+                throw new HttpError(400, new Error('expected array'));
             }
+
+            const subject = is_array ? this.jsonBody.value : [this.jsonBody.value];
+            const validation_results: any[] = [];
+
+            for (let i = 0; i < subject.length; ++i) {
+
+                // run validation
+                const validation_result = await Validate(subject[i], options.validate, this.injector);
+                validation_results.push(validation_result);
+
+                if (options.throwOnValidation !== false && !validation_result.valid) {
+                    throw new HttpError(400,
+                        new Error(validation_result.failures.map(f => f.reason).join('\r\n')),
+                        validation_result);
+                }
+            }
+
+            json_body._validation = validation_results;
 
             return true;
         }
@@ -179,7 +202,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 @Injectable()
 export class BodyGuardService {
 
-    constructor(public request: IncomingRequest, 
+    constructor(public request: IncomingRequest,
         public jsonBody: JsonBody,
         public injector: Injector) { }
 
