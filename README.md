@@ -34,21 +34,21 @@ First declare a RouterOutlet with HttpRoute decorators on methods:
 
 ```typescript
 
-import { RouterOutlet } from '@uon/router';
-import { HttpRoute, HttpResponse } from '@uon/http';
+import { RouterOutlet, RouteParams } from '@uon/router';
+import { HttpRoute, OutgoingResponse } from '@uon/http';
 
 @RouterOutlet()
 export class MyAppOutlet {
 
     // ctor with dependency injection 
-    constructor(private response: HttpResponse) {}
+    constructor(private response: OutgoingResponse) {}
 
     @HttpRoute({
         method: 'GET',
-        path: '/say-hello'
+        path: '/say-hello/:param1'
     })
-    myStaticPathRoute() {
-        this.response.send('Hello World!');
+    myStaticPathRoute(params: RouteParams) {
+        this.response.send(`Hello World! ${params.param1}`);
     }
 
 }
@@ -59,7 +59,7 @@ export class MyAppOutlet {
 const routes: Routes = [
     {
         path:'/my-base-path',
-        outlet: MyAppController
+        outlet: MyAppOutlet
     }
 ];
 ```
