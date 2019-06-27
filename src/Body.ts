@@ -157,8 +157,8 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 
                 const obj = JSON.parse(buffer.toString('utf8'));
                 const result = type 
-                    ? (Array.isArray(obj) ? (obj as any[]).map(o => serializer.deserialize(o)) 
-                    : serializer.deserialize(obj)) : obj;
+                    ? (Array.isArray(obj) ? (obj as any[]).map(o => serializer.deserialize(o, false)) 
+                    : serializer.deserialize(obj, false)) : obj;
 
                 // assign data to the JsonBody provider
                 json_body._data = result;
