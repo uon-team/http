@@ -1,5 +1,5 @@
 
-import { InjectionToken, Injectable } from '@uon/core';
+import { InjectionToken, Injectable, MakeUnique } from '@uon/core';
 import { Router, MakeRouteHandlerDecorator, RouteHandlerData } from '@uon/router';
 
 
@@ -43,7 +43,7 @@ export interface HttpRoute extends RouteHandlerData {
  * HttpRoute decorator for router endpoints 
  * @param meta 
  */
-export const HttpRoute = MakeRouteHandlerDecorator<HttpRoute>("HttpRoute")
+export const HttpRoute = MakeUnique("@uon/http/HttpRoute", MakeRouteHandlerDecorator<HttpRoute>("HttpRoute"))
 
 
 
