@@ -20,7 +20,7 @@ export interface CookieSetOptions {
     expires?: Date;
 
     /**
-     * The maximum lifetime of the cookie
+     * The maximum lifetime of the cookie in seconds
      */
     maxAge?: number;
 
@@ -72,7 +72,6 @@ export class Cookies implements IOutgoingReponseModifier {
 
         // parse incoming cookies
         this.parse();
-
 
     }
 

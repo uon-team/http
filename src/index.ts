@@ -19,8 +19,8 @@ export * from './OutgoingResponse';
 export * from './HttpRouter';
 export * from './HttpServer';
 export * from './TlsProvider';
-export * from './Encoding';
 export * from './Range';
 
+export * from './Cors';
 export * from './Body';
 export * from './Query';

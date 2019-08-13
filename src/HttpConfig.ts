@@ -3,7 +3,6 @@ import { InjectionToken, Provider, ProvideInjectable } from '@uon/core';
 import { Expires } from './Expires';
 import { Cookies } from './Cookies';
 import { Authorization } from './Authorization';
-import { Encoding } from './Encoding';
 import { Range } from './Range';
 
 import { IncomingRequest } from './IncomingRequest';
@@ -83,9 +82,6 @@ export const DEFAULT_CONTEXT_PROVIDERS = Object.freeze(<Provider[]>[
 
     // auth support
     Authorization,
-
-    // encoding support
-    Encoding,
 
     // range support
     Range,

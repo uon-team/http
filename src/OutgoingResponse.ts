@@ -231,6 +231,7 @@ export class OutgoingResponse {
 
             this._response.writeHead(this._statusCode, this._headers);
             this._inputStream.pipe(this._response);
+            await AwaitStream(this._inputStream);
         }
         else {
             // no content
@@ -255,4 +256,11 @@ class ClosureResponseModifer implements IOutgoingReponseModifier {
         return this.func(res);
     }
 
+}
+
+function AwaitStream(stream: Stream) {
+
+    return new Promise((resolve) => {
+        stream.on('end', resolve);
+    });
 }

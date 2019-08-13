@@ -6,6 +6,7 @@ import { FindModelAnnotation, JsonSerializer, Model, Validate, ValidationResult,
 import { IncomingRequest } from './IncomingRequest';
 import { HttpError } from './HttpError';
 
+import { parse as ParseFormData } from 'querystring'
 
 
 
@@ -51,7 +52,7 @@ export function BodyGuard(config: BodyGuardConfig) {
 
 /**
  * Access to the parsed JSON request body
- * Use in conjunction with JsonBodyGuard
+ * Must use in conjunction with JsonBodyGuard or FormDataBodyGuard
  */
 export class JsonBody<T = any> {
 
@@ -121,6 +122,7 @@ export interface JsonBodyGuardOptions<T> {
 
 /**
  * A guard for validating a JSON request body
+ * Results are stored in JsonBody
  * @param options 
  */
 export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T> = {}) {
@@ -156,9 +158,9 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             try {
 
                 const obj = JSON.parse(buffer.toString('utf8'));
-                const result = type 
-                    ? (Array.isArray(obj) ? (obj as any[]).map(o => serializer.deserialize(o, false)) 
-                    : serializer.deserialize(obj, false)) : obj;
+                const result = type
+                    ? (Array.isArray(obj) ? (obj as any[]).map(o => serializer.deserialize(o, false))
+                        : serializer.deserialize(obj, false)) : obj;
 
                 // assign data to the JsonBody provider
                 json_body._data = result;
@@ -199,6 +201,79 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 }
 
 
+
+export interface FormDataBodyGuardOptions {
+
+    /**
+     * Extra validation on top of model validation.
+     * Can be used if no model is provided.
+     */
+    validate?: { [k: string]: Validator[] };
+
+
+    /**
+     * Throws a 400 http error on validation failure if set to true.
+     * Otherwise you have to handle the validation failure yourself.
+     * Validation results are stored in JsonBody.
+     * Defaults to true. 
+     */
+    throwOnValidation?: boolean;
+
+
+    /**
+     * Maximum body size in bytes
+     */
+    maxLength?: number;
+}
+
+
+/**
+ * A guard for validating a x-www-form-urlencoded request body
+ * Results are stored in JsonBody
+ * @param options 
+ */
+export function FormDataBodyGuard(options: FormDataBodyGuardOptions) {
+
+    return class _FormDataBodyGuard extends BodyGuardService {
+
+        async checkGuard(ar: ActivatedRoute<any>): Promise<boolean> {
+
+            this.checkHeaders({
+                accept: ['application/x-www-form-urlencoded'/*, 'multipart/form-data'*/],
+                maxLength: options ? options.maxLength : undefined
+            });
+
+            const json_body: any = this.jsonBody;
+
+            // wait for body buffer
+            const buffer = await this.request.body;
+            json_body._raw = buffer;
+
+            // parse form data
+            const result = ParseFormData(buffer.toString('utf8'), '&', '=');
+            json_body._data = result;
+
+            // run validation
+            const validation_result = await Validate(json_body.value, options.validate, this.injector);
+
+            if (options.throwOnValidation !== false && !validation_result.valid) {
+                throw new HttpError(400,
+                    new Error(validation_result.failures.map(f => f.reason).join('\r\n')),
+                    validation_result);
+            }
+
+            json_body._validation = validation_result;
+
+            return true;
+
+        }
+    }
+}
+
+
+/**
+ * Base service for body guards
+ */
 @Injectable()
 export class BodyGuardService {
 

@@ -3,7 +3,7 @@
 import { Injectable, Inject, Optional, EventSource, Injector, Provider, InjectionToken, ArrayUtils } from '@uon/core';
 import { Router } from '@uon/router';
 
-import { Server, IncomingMessage, ServerResponse } from 'http';
+import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from 'http';
 import * as https from 'https';
 import { Socket } from 'net';
 import { parse as ParseUrl } from 'url';
@@ -15,10 +15,17 @@ import { HttpError } from './HttpError';
 import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, MatchMethodFunc, HttpRoute } from './HttpRouter';
 
 import { HTTP_TLS_PROVIDER, TLSProvider } from './TlsProvider';
-
-
+import { MockIncomingMessage, MockServerResponse } from './Mock';
 
 const ROUTER_MATCH_FUNCS = [MatchMethodFunc];
+
+
+export interface MockRequestOptions {
+    url: string;
+    method: string;
+    headers: IncomingHttpHeaders;
+    body?: Buffer;
+}
 
 /**
  * 
@@ -44,9 +51,9 @@ export class HttpServer extends EventSource {
         // flatten providers
         const providers: Provider[] = [];
 
-        for(let i = 0; i < extraProviders.length; ++i) {
+        for (let i = 0; i < extraProviders.length; ++i) {
             let provider_list = extraProviders[i];
-            for(let j = 0; j < provider_list.length; ++j) {
+            for (let j = 0; j < provider_list.length; ++j) {
                 providers.push(provider_list[j]);
             }
         }
@@ -127,8 +134,72 @@ export class HttpServer extends EventSource {
         return super.on(type, callback, priority);
     }
 
+
+    async mockRequest(options: MockRequestOptions) {
+
+        // fetch the root http router
+        const router: Router<HttpRoute> = this.injector.get(HTTP_ROUTER);
+
+
+        // create mock request object
+        const mock_req = new MockIncomingMessage(options.url, options.method, options.headers || {}, options.body);
+        mock_req.end();
+
+        // create mock response object
+        const mock_res = new MockServerResponse();
+
+        // create a new context
+        const http_context = new HttpContext({
+            injector: this.injector,
+            providers: this._contextProviders,
+            req: mock_req,
+            res: mock_res,
+            traceErrors: this.config.traceContextErrors
+        });
+
+        const pathname = ParseUrl(options.url, false).pathname;
+        const method = options.method.toUpperCase();
+
+        // get match
+        const match = router.match(pathname, { method }, ROUTER_MATCH_FUNCS);
+
+        // try processing it
+        try {
+
+            // execute the http context
+            await http_context.process(match);
+
+            // make sure a response was sent
+            if (!http_context.response.sent) {
+                console.error(`RouterOutlet ${match.outlet.name}.${match.handler.methodKey} did not provide a response.`);
+                throw new HttpError(501);
+            }
+        }
+        catch (ex) {
+
+            // must be HttpError from this point
+            let error = ex instanceof HttpError
+                ? ex
+                : new HttpError(500, ex);
+
+            // process the error on the context 
+            await http_context.processError(match, error);
+
+        }
+
+        // return a resolved response object
+        const result = {
+            statusCode: mock_res.statusCode,
+            statusMessage: mock_res.statusMessage,
+            headers: mock_res.headers,
+            body: mock_res.responseData
+        };
+
+        return result;
+    }
+
     /**
-     * Spawns a plain http server (for dev or redirect to https)
+     * Spawns a plain http server
      */
     private spawnHttpServer() {
 
@@ -266,7 +337,7 @@ export class HttpServer extends EventSource {
             }
 
         }
-        
+
     }
 
     /**

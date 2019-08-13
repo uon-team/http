@@ -16,7 +16,6 @@ export interface RequestQuery {
 export class RequestQuery { }
 
 
-
 export interface QueryArgumentDefinition {
     /**
      * Coerse value to type

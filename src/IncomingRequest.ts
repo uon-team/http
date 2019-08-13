@@ -26,7 +26,7 @@ export class IncomingRequest {
     constructor(private _request: IncomingMessage) {
 
         this._uri = ParseUrl(_request);
-        this._clientIp = _request.socket.remoteAddress;
+        this._clientIp = _request.socket ? _request.socket.remoteAddress : null;
         this._secure = _request.connection instanceof TLSSocket;
 
         this.parseForwardedHeaders();
@@ -169,7 +169,7 @@ function ParseUrl(req: IncomingMessage) {
     let port = host_parts[1];
 
     uri.protocol = (req.connection instanceof TLSSocket) ? 'https:' : 'http:';
-    uri.host = req.headers.host;
+    uri.host = req.headers.host || `${host}:${port}`;
     uri.hostname = host;
     uri.port = port;
 

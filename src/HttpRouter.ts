@@ -30,13 +30,6 @@ export interface HttpRoute extends RouteHandlerData {
      */
     path: string;
 
-    /**
-     * A map of query fields to pre-validate and 
-     * coerse to types before calling the decorated method
-     */
-    query?: any;
-
-
 }
 
 /**
@@ -44,7 +37,6 @@ export interface HttpRoute extends RouteHandlerData {
  * @param meta 
  */
 export const HttpRoute = MakeUnique("@uon/http/HttpRoute", MakeRouteHandlerDecorator<HttpRoute>("HttpRoute"))
-
 
 
 /**

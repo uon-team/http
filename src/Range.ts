@@ -4,9 +4,19 @@ import { HttpError } from './HttpError';
 import { IncomingRequest } from './IncomingRequest';
 import { OutgoingResponse, IOutgoingReponseModifier } from './OutgoingResponse';
 
+import { promises as FSPromise, createReadStream } from 'fs';
 
 export interface RangeConfigureOptions {
 
+    /**
+     * The file path to stream as the response
+     */
+    path: string;
+
+    /**
+     * The maximum chunk size the server can send
+     */
+    maxChunkSize?: number;
 }
 
 
@@ -65,12 +75,19 @@ export class Range implements IOutgoingReponseModifier {
         return this._acceptRangeRequest;
     }
 
+    /**
+     * 
+     * @param options 
+     */
     configure(options: RangeConfigureOptions) {
         this._options = options;
         return this;
     }
 
-
+    /**
+     * IOutgoingReponseModifier implementation
+     * @param response 
+     */
     async modifyResponse(response: OutgoingResponse) {
 
         // if user set accept to true, set header
@@ -78,48 +95,43 @@ export class Range implements IOutgoingReponseModifier {
             response.headers["Accept-Ranges"] = "bytes";
         }
 
-
         // must be configured to continue
         if (!this._options) {
             return;
         }
 
         const start_byte = this._start;
-        /*const src_adapter = this._options.srcAdapter;
-        const src_path = this._options.srcPath;
+        const src_path = this._options.path;
 
         if (start_byte !== undefined) {
 
-            return src_adapter.stat(src_path).then((stats) => {
+            let stats = await FSPromise.stat(src_path);
+            const total_size = stats.size;
 
-                const total_size = stats.size;
-    
-                this._end = Math.min(start_byte + this.config.maxChunkSize, this._end || total_size - 1);
+            this._end = Math.min(start_byte + this._options.maxChunkSize, this._end || total_size - 1);
 
-                if (this._end >= total_size) {
-                    throw new HttpError(416);
-                }
-    
-                // compute the chunk size
-                let chunk_size = (this._end - start_byte) + 1;
-    
-                // if the chunk is actually the full file size, status is 200, else 206
-                response.statusCode = chunk_size === total_size ? 200 : 206;
-    
-                // we are sending a a byte range, set the headers
-                response.assignHeaders({
-                    "Content-Length": chunk_size,
-                    "Content-Range": `bytes ${start_byte}-${this._end}/${total_size}`,
-                    "Accept-Ranges": "bytes"
-                });
+            if (this._end >= total_size) {
+                throw new HttpError(416);
+            }
 
-                // set input stream with range
-                response.stream(src_adapter.createReadStream(src_path, this.range));
-    
+            // compute the chunk size
+            let chunk_size = (this._end - start_byte) + 1;
+
+            // if the chunk is actually the full file size, status is 200, else 206
+            response.statusCode = chunk_size === total_size ? 200 : 206;
+
+            // we are sending a a byte range, set the headers
+            response.assignHeaders({
+                "Content-Length": chunk_size,
+                "Content-Range": `bytes ${start_byte}-${this._end}/${total_size}`,
+                "Accept-Ranges": "bytes"
             });
 
+            // set input stream with range
+            response.stream(createReadStream(src_path, this.range));
 
-        }*/
+
+        }
 
 
     }
