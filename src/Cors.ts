@@ -73,7 +73,10 @@ export function CorsGuard(options: CorsGuardOptions) {
 
             // headers
             this.response.setHeader('Access-Control-Allow-Headers',
-                options.headers || DEFAULT_HEADERS);
+                options.headers
+                    ? options.headers.join(', ')
+                    : DEFAULT_HEADERS
+            );
 
             // creds
             this.response.setHeader('Access-Control-Allow-Credentials',
