@@ -104,7 +104,8 @@ export class CorsGuardService {
 
     checkOrigin(origins: '*' | string | string[], creds: boolean) {
 
-        const req_origin = this.request.headers.origin as string;
+        const req_origin = this.request.headers.origin as string
+            || this.request.headers.host as string;
 
         if (req_origin) {
             if (origins === '*') {
