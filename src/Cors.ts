@@ -32,6 +32,12 @@ export interface CorsGuardOptions {
     headers?: string[];
 
     /**
+     * Sets Access-Control-Allow-Headers
+     * Defaults to ['X-Auth-']
+     */
+    exposeHeaders?: string[];
+
+    /**
      * Sets Access-Control-Allow-Credentials
      * Defaults to false
      */
@@ -71,12 +77,18 @@ export function CorsGuard(options: CorsGuardOptions) {
                     : DEFAULT_METHODS
             );
 
-            // headers
+            // request headers
             this.response.setHeader('Access-Control-Allow-Headers',
                 options.headers
                     ? options.headers.join(', ')
                     : DEFAULT_HEADERS
             );
+
+            // response headers
+            if (options.exposeHeaders)
+                this.response.setHeader('Access-Control-Expose-Headers',
+                    options.exposeHeaders
+                );
 
             // creds
             this.response.setHeader('Access-Control-Allow-Credentials',
