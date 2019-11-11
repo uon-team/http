@@ -9,6 +9,8 @@ import { IncomingRequest } from './IncomingRequest';
 import { HTTP_ERROR_HANDLER, DefaultHttpErrorHandler } from './ErrorHandler';
 import { RequestQuery } from './Query';
 import { JsonBody } from './Body';
+import { Router } from '@uon/router';
+import { HTTP_ROUTER } from './HttpRouter';
 
 // the unique http config token
 export const HTTP_CONFIG = new InjectionToken<HttpConfig>('HTTP_CONFIG');
@@ -34,7 +36,7 @@ export interface HttpConfig {
     plainPort?: number;
 
     /**
-     * an ip/range to listen to on the host, defaults to 0.0.0.0 (everywhere)
+     * an ip/range to listen to on the host, defaults to 127.0.0.1 (local only)
      */
     host?: string;
 
@@ -49,14 +51,21 @@ export interface HttpConfig {
      */
     traceContextErrors?: boolean;
 
+    /**
+     * A token to fetch the router
+     * Defaults to HTTP_ROUTER
+     */
+    routerToken?: InjectionToken<Router<any>>;
+
 }
 
 
 export const HTTP_CONFIG_DEFAULTS: HttpConfig = {
     port: 4433,
     plainPort: 8080,
-    host: '0.0.0.0',
-    providers: []
+    host: '127.0.0.1',
+    providers: [],
+    routerToken: HTTP_ROUTER
 }
 
 
