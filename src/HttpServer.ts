@@ -1,7 +1,7 @@
 
 
-import { Injectable, Inject, Optional, EventSource, Injector, Provider, InjectionToken, ArrayUtils } from '@uon/core';
-import { Router } from '@uon/router';
+import { Injectable, Inject, Optional, EventSource, Injector, Provider, InjectionToken, ArrayUtils, Application } from '@uon/core';
+import { Router, RouteMatch } from '@uon/router';
 
 import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from 'http';
 import * as https from 'https';
@@ -12,7 +12,7 @@ import { parse as ParseUrl } from 'url';
 import { HttpContext } from './HttpContext';
 import { HttpConfig, HTTP_CONFIG, HTTP_PROVIDERS } from './HttpConfig';
 import { HttpError } from './HttpError';
-import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, MatchMethodFunc, HttpRoute } from './HttpRouter';
+import { HTTP_REDIRECT_ROUTER, MatchMethodFunc, HttpRoute } from './HttpRouter';
 
 import { HTTP_TLS_PROVIDER, TLSProvider } from './TlsProvider';
 import { MockIncomingMessage, MockServerResponse } from './Mock';
@@ -41,6 +41,7 @@ export class HttpServer extends EventSource {
     private _contextProviders: Provider[];
 
     constructor(private injector: Injector,
+        private _app: Application,
         @Inject(HTTP_CONFIG) private config: HttpConfig,
         @Inject(HTTP_PROVIDERS) extraProviders: Provider[][],
         @Optional() @Inject(HTTP_TLS_PROVIDER) private tlsProvider: TLSProvider,
@@ -138,7 +139,7 @@ export class HttpServer extends EventSource {
     async mockRequest(options: MockRequestOptions) {
 
         // fetch the root http router
-        const router: Router<HttpRoute> = this.injector.get(HTTP_ROUTER);
+        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
 
 
         // create mock request object
@@ -148,20 +149,24 @@ export class HttpServer extends EventSource {
         // create mock response object
         const mock_res = new MockServerResponse();
 
+        const pathname = ParseUrl(options.url, false).pathname;
+        const method = options.method.toUpperCase();
+
+        // get match
+        const match = router.match(pathname, { method }, ROUTER_MATCH_FUNCS);
+
+        // select the proper injector
+        let root_injector = this.selectInjector(match);
+
         // create a new context
         const http_context = new HttpContext({
-            injector: this.injector,
+            injector: root_injector,
             providers: this._contextProviders,
             req: mock_req,
             res: mock_res,
             traceErrors: this.config.traceContextErrors
         });
 
-        const pathname = ParseUrl(options.url, false).pathname;
-        const method = options.method.toUpperCase();
-
-        // get match
-        const match = router.match(pathname, { method }, ROUTER_MATCH_FUNCS);
 
         // try processing it
         try {
@@ -237,9 +242,7 @@ export class HttpServer extends EventSource {
             });
         }
 
-        // proceed to create a new one
         let default_cert = await this.tlsProvider.getDefault();
-
 
         const ssl_options: https.ServerOptions = {
             SNICallback: (domain, cb) => {
@@ -281,22 +284,27 @@ export class HttpServer extends EventSource {
         const current_time = Date.now();
 
         // fetch the root http router
-        const router: Router<HttpRoute> = this.injector.get(HTTP_ROUTER);
+        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
 
-        // create a new context
-        const http_context = new HttpContext({
-            injector: this.injector,
-            providers: this._contextProviders,
-            req: req,
-            res: res,
-            traceErrors: this.config.traceContextErrors
-        });
 
         const pathname = ParseUrl(req.url, false).pathname;
         const method = req.method;
 
         // get match
         const match = router.match(pathname, { method }, ROUTER_MATCH_FUNCS);
+
+        // select the proper injector
+        let root_injector = this.selectInjector(match);
+
+        // create a new context
+        const http_context = new HttpContext({
+            injector: root_injector,
+            providers: this._contextProviders,
+            req: req,
+            res: res,
+            traceErrors: this.config.traceContextErrors
+        });
+
 
         // try processing it
         try {
@@ -380,16 +388,8 @@ export class HttpServer extends EventSource {
     private async handleConnectionUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
 
         // fetch the root http router
-        const router: Router<HttpRoute> = this.injector.get(HTTP_ROUTER);
+        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
 
-        // create context
-        const context = new HttpContext({
-            injector: this.injector,
-            providers: this.config.providers,
-            req,
-            res: null,
-            head
-        });
 
         const pathname = ParseUrl(req.url, false).pathname;
         const method = "UPGRADE";
@@ -397,9 +397,23 @@ export class HttpServer extends EventSource {
         // get match
         const match = router.match(pathname, { method }, ROUTER_MATCH_FUNCS);
 
+        // select the proper injector
+        let root_injector = this.selectInjector(match);
+
+        // create context
+        const context = new HttpContext({
+            injector: root_injector,
+            providers: this._contextProviders,
+            req,
+            res: null,
+            head
+        });
+
+
         try {
             // process the match
             await context.process(match);
+
         }
         catch (ex) {
 
@@ -410,6 +424,23 @@ export class HttpServer extends EventSource {
             context.abort(error.code, error.message);
         }
 
+    }
+
+    private selectInjector(match: RouteMatch) {
+
+        let root_injector = this.injector;
+
+        if (match && match.outlet) {
+            // need to get module injector
+            let ref = this._app.declarations.get(match.outlet);
+            if (!ref) {
+                throw new Error(`${match.outlet.name} is not declared in any modules`);
+            }
+
+            root_injector = ref.injector;
+        }
+
+        return root_injector;
     }
 
 }
