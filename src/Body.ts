@@ -182,7 +182,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             for (let i = 0; i < subject.length; ++i) {
 
                 // run validation
-                const validation_result = await Validate(subject[i], options.validate, this.injector);
+                const validation_result = await Validate(subject[i], options.validate, this.injector, i);
                 validation_results.push(validation_result);
 
                 if (options.throwOnValidation !== false && !validation_result.valid) {
@@ -224,6 +224,7 @@ export interface FormDataBodyGuardOptions {
      * Maximum body size in bytes
      */
     maxLength?: number;
+
 }
 
 
@@ -240,7 +241,9 @@ export function FormDataBodyGuard(options: FormDataBodyGuardOptions) {
 
             this.checkHeaders({
                 accept: ['application/x-www-form-urlencoded'/*, 'multipart/form-data'*/],
-                maxLength: options ? options.maxLength : undefined
+                maxLength: options
+                    ? options.maxLength
+                    : undefined
             });
 
             const json_body: any = this.jsonBody;
@@ -250,7 +253,7 @@ export function FormDataBodyGuard(options: FormDataBodyGuardOptions) {
             json_body._raw = buffer;
 
             // parse form data
-            const result = ParseFormData(buffer.toString('utf8'), '&', '=');
+            const result = Object.assign({}, ParseFormData(buffer.toString('utf8'), '&', '='));
             json_body._data = result;
 
             // run validation
