@@ -187,7 +187,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 
                 if (options.throwOnValidation !== false && !validation_result.valid) {
                     throw new HttpError(400,
-                        new Error(validation_result.failures.map(f => f.reason).join('\r\n')),
+                        new Error(validation_result.failures.map(f => `${f.key}: ${f.reason}`).join('\r\n')),
                         validation_result);
                 }
             }

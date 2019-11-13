@@ -97,7 +97,7 @@ export class HttpContext {
             throw new Error(`You cannot call process() twice on the same HttpContext.`);
         }
         this._processing = true;
-
+        
         // create the injector
         this._injector = Injector.Create(this.getProviderList(match), this._root);
 
@@ -113,7 +113,7 @@ export class HttpContext {
         const guard_pass = await match.checkGuards(this._injector);
 
         // Guards can send a response too you know
-        if (this.response.sent) {
+        if (this.response.sent && !this.response.isNull) {
             // we all done here
             return;
         }

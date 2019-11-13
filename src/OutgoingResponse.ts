@@ -48,6 +48,10 @@ export class OutgoingResponse {
      */
     constructor(private _response: ServerResponse) { }
 
+
+    get isNull() {
+        return this._response === null;
+    }
     /**
      * Whether the headers were sent
      */
