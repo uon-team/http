@@ -1,4 +1,4 @@
-import { Injectable, ObjectUtils } from '@uon/core';
+import { Injectable } from '@uon/core';
 import { IncomingRequest } from './IncomingRequest';
 import { OutgoingResponse, IOutgoingReponseModifier } from './OutgoingResponse';
 
@@ -83,7 +83,7 @@ export class Cookies implements IOutgoingReponseModifier {
      */
     setCookie(name: string, value: string, options?: CookieSetOptions) {
 
-        const opts: CookieSetOptions = ObjectUtils.extend({}, DEFAULT_SET_COOKIE_OPTIONS, options);
+        const opts: CookieSetOptions = Object.assign({}, DEFAULT_SET_COOKIE_OPTIONS, options);
         opts.secure = this.request.secure;
 
         try {

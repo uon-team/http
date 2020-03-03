@@ -289,9 +289,12 @@ export class BodyGuardService {
         // we need a content-type from the headers
         if (config.accept) {
 
+            const type = (this.request.headers['content-type'] || '').split(';')[0];
+
+
             // literal check
             // TODO check for wildcards also
-            if (config.accept.indexOf(this.request.headers['content-type']) === -1) {
+            if (config.accept.indexOf(type.trim()) === -1) {
                 throw new HttpError(400, new Error(`Content-Type must be set to (one of) ${config.accept.join(', ')}.`));
             }
         }

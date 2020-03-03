@@ -7,14 +7,17 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
     },
-    "dependencies": {},
     "peerDependencies": {
         "@uon/core": "^0.9.1",
         "@uon/model": "^0.9.1",
-        "@uon/router": "^0.9.1"
+        "@uon/router": "^0.9.1",
+        "tslib": "^1.10.0"
+    },
+    "dependencies": {
+        "@uon/string-utils": "^1.0.0"
     },
     "devDependencies": {
-        "@types/node": "^10.11.0"
+        "@types/node": "^10.17.5"
     },
     "repository": {
         "type": "git",

@@ -1,6 +1,5 @@
 import { OutgoingMessage, OutgoingHttpHeaders, ServerResponse } from "http";
 import { Writable, Stream, Readable } from "stream";
-import { ObjectUtils, ArrayUtils } from "@uon/core";
 
 
 export interface IOutgoingReponseModifier {
@@ -157,7 +156,7 @@ export class OutgoingResponse {
 
             let result: string = typeof payload === 'string'
                 ? payload
-                : JSON.stringify(options.keep ? ObjectUtils.filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
+                : JSON.stringify(options.keep ? Filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
 
             // prefix output if specified in options
             if (options.prefixOutput) {
@@ -200,7 +199,9 @@ export class OutgoingResponse {
     use(...transforms: IOutgoingReponseModifier[]) {
 
         transforms.forEach((t) => {
-            ArrayUtils.include(this._modifiers, t);
+            if(this._modifiers.indexOf(t) === -1) {
+                this._modifiers.push(t);
+            }
         });
 
     }
@@ -267,4 +268,15 @@ function AwaitStream(stream: Stream) {
     return new Promise((resolve) => {
         stream.on('end', resolve);
     });
+}
+
+
+function Filter(target: any, fields: string[]) {
+    let result: any = {};
+    for (let i = 0; i < fields.length; ++i) {
+        let field = fields[i];
+        result[field] = target[field];
+    }
+
+    return result;
 }

@@ -1,6 +1,6 @@
 
 
-import { Injectable, Inject, Optional, EventSource, Injector, Provider, InjectionToken, ArrayUtils, Application } from '@uon/core';
+import { Injectable, Inject, Optional, EventSource, Injector, Provider, Application } from '@uon/core';
 import { Router, RouteMatch } from '@uon/router';
 
 import { Server, IncomingMessage, ServerResponse, IncomingHttpHeaders } from 'http';
@@ -136,6 +136,10 @@ export class HttpServer extends EventSource {
     }
 
 
+    /**
+     * Make a mock request to the application
+     * @param options 
+     */
     async mockRequest(options: MockRequestOptions) {
 
         // fetch the root http router
@@ -434,7 +438,7 @@ export class HttpServer extends EventSource {
             // need to get module injector
             let ref = this._app.declarations.get(match.outlet);
             if (!ref) {
-                throw new Error(`${match.outlet.name} is not declared in any modules`);
+                throw new Error(`${match.outlet.name} is not declared in any loaded modules`);
             }
 
             root_injector = ref.injector;

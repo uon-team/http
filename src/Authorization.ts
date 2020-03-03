@@ -1,4 +1,5 @@
-import { Injectable, ObjectUtils, StringUtils } from '@uon/core';
+import { Injectable,  } from '@uon/core';
+import { Unquote } from '@uon/string-utils';
 import { IncomingRequest } from './IncomingRequest';
 import { OutgoingResponse, IOutgoingReponseModifier } from './OutgoingResponse';
 
@@ -8,8 +9,6 @@ export interface WWWAuthenticateConfig {
     realm: string;
     charset?: string;
 }
-
-
 
 
 export interface BasicCredentials {
@@ -49,7 +48,7 @@ export class Authorization implements IOutgoingReponseModifier {
             this._scheme = scheme;
 
             // parse the token
-            let token_str = StringUtils.unquote(str.substr(start).trim());
+            let token_str = Unquote(str.substr(start).trim());
 
             // assign raw token
             this._token = token_str;

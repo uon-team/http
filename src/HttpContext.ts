@@ -1,5 +1,5 @@
-import { Type, Injector, Provider, InjectionToken, GetTypeMetadata, IsInjectable, GetInjectionTokens, THROW_IF_NOT_FOUND } from '@uon/core';
-import { RouteMatch, ActivatedRoute, RouterOutlet, RouteGuard, IRouteGuardService, RouteParams, RouteData } from '@uon/router';
+import { Type, Injector, Provider, InjectionToken, GetTypeMetadata } from '@uon/core';
+import { RouteMatch, ActivatedRoute, RouterOutlet, RouteParams, RouteData } from '@uon/router';
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders, STATUS_CODES } from 'http';
 import { Url } from 'url';
 
@@ -106,9 +106,6 @@ export class HttpContext {
             throw new HttpError(404);
         }
 
-        // do data resolve
-        await match.resolveData(this._injector);
-
         // process route guards
         const guard_pass = await match.checkGuards(this._injector);
 
@@ -123,6 +120,9 @@ export class HttpContext {
             throw new HttpError(412);
 
         }
+
+        // resolve route data
+        await match.resolveData(this._injector);
 
         // finally call handler
         return await match.callHandler(this._injector);

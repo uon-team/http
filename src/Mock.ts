@@ -83,7 +83,6 @@ export class MockServerResponse extends Transform {
     public statusMessage: string = STATUS_CODES[200];
     public finished: boolean = false;
 
-
     upgrading: boolean;
     chunkedEncoding: boolean;
     shouldKeepAlive: boolean;
@@ -106,8 +105,6 @@ export class MockServerResponse extends Transform {
     get responseData() {
         return Buffer.concat(this._responseData);
     }
-
-
 
     _transform(chunk: any, encoding: string, callback: TransformCallback) {
 
@@ -173,7 +170,5 @@ export class MockServerResponse extends Transform {
 
     addTrailers(headers: OutgoingHttpHeaders | Array<[string, string]>): void { }
     flushHeaders(): void { }
-
-
 
 }

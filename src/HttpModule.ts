@@ -1,5 +1,5 @@
 
-import { Module, ModuleWithProviders, ObjectUtils, APP_INITIALIZER } from '@uon/core';
+import { Module, ModuleWithProviders, APP_INITIALIZER } from '@uon/core';
 import { Router } from '@uon/router';
 
 import { HttpServer } from './HttpServer';
@@ -47,7 +47,7 @@ export class HttpModule {
     static WithConfig(config: HttpConfig): ModuleWithProviders {
 
         // merge provided config with the default
-        const merged_config = ObjectUtils.extend({}, HTTP_CONFIG_DEFAULTS, config);
+        const merged_config = Object.assign({}, HTTP_CONFIG_DEFAULTS, config);
 
         // return a module with providers object
         return {

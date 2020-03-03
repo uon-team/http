@@ -34,7 +34,7 @@ export interface QueryArgumentDefinition {
     match?: RegExp;
 
     /**
-     * The default value
+     * The default value as if it was set by the request (before coersion)
      */
     defaultValue?: any;
 
