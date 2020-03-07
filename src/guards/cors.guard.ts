@@ -1,14 +1,19 @@
 import { Injectable } from "@uon/core";
 import { ActivatedRoute } from "@uon/router";
-import { IncomingRequest } from "./IncomingRequest";
-import { OutgoingResponse } from "./OutgoingResponse";
-import { HttpError } from "./HttpError";
+import { IncomingRequest } from "../base/request";
+import { OutgoingResponse } from "../base/response";
+import { HttpError } from "../error/error";
 
 
 const DEFAULT_METHODS = ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'].join(', ');
 const DEFAULT_HEADERS = ['Content-Type'];
 const DEFAULT_MAX_AGE = -1;
 
+
+
+/**
+ * Cofiguration options for a new CORS guard
+ */
 export interface CorsGuardOptions {
 
     /**
@@ -51,6 +56,12 @@ export interface CorsGuardOptions {
 
 }
 
+
+/**
+ * Creates a new CORS guard
+ * A CORS guard checks the origin on a request and sets appropriate headers on he response
+ * @param options 
+ */
 export function CorsGuard(options: CorsGuardOptions) {
 
     return class _CorsGuard extends CorsGuardService {

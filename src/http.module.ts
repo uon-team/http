@@ -2,9 +2,11 @@
 import { Module, ModuleWithProviders, APP_INITIALIZER } from '@uon/core';
 import { Router } from '@uon/router';
 
-import { HttpServer } from './HttpServer';
-import { HttpConfig, HTTP_CONFIG, HTTP_CONFIG_DEFAULTS, HTTP_PROVIDERS, DEFAULT_CONTEXT_PROVIDERS } from './HttpConfig';
-import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, HttpRoute } from './HttpRouter';
+import { HttpServer } from './server/http.server';
+import { HttpConfig, HTTP_CONFIG, HTTP_CONFIG_DEFAULTS } from './server/http.config';
+import { HTTP_PROVIDERS, DEFAULT_CONTEXT_PROVIDERS } from './server/http.providers';
+
+import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, HttpRoute } from './server/http.router';
 
 
 @Module({
@@ -16,11 +18,7 @@ import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, HttpRoute } from './HttpRouter';
         },
         {
             token: HTTP_ROUTER,
-            factory: () => {
-                return new Router(HttpRoute)
-            },
-            deps: []
-
+            value: new Router(HttpRoute)
         },
         {
             token: HTTP_REDIRECT_ROUTER,

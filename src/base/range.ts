@@ -1,8 +1,8 @@
 
 import { Injectable } from '@uon/core';
-import { HttpError } from './HttpError';
-import { IncomingRequest } from './IncomingRequest';
-import { OutgoingResponse, IOutgoingReponseModifier } from './OutgoingResponse';
+import { HttpError } from '../error/error';
+import { IncomingRequest } from './request';
+import { OutgoingResponse, IOutgoingReponseModifier } from './response';
 
 import { promises as FSPromise, createReadStream } from 'fs';
 

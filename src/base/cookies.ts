@@ -1,6 +1,6 @@
 import { Injectable } from '@uon/core';
-import { IncomingRequest } from './IncomingRequest';
-import { OutgoingResponse, IOutgoingReponseModifier } from './OutgoingResponse';
+import { IncomingRequest } from './request';
+import { OutgoingResponse, IOutgoingReponseModifier } from './response';
 
 
 const SPLIT_ENTRIES = /; */;

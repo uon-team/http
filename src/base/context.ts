@@ -3,10 +3,10 @@ import { RouteMatch, ActivatedRoute, RouterOutlet, RouteParams, RouteData } from
 import { IncomingMessage, ServerResponse, OutgoingHttpHeaders, STATUS_CODES } from 'http';
 import { Url } from 'url';
 
-import { HttpError } from './HttpError';
-import { OutgoingResponse } from './OutgoingResponse';
-import { IncomingRequest } from './IncomingRequest';
-import { HttpErrorHandler, HTTP_ERROR_HANDLER } from './ErrorHandler';
+import { HttpError } from '../error/error';
+import { OutgoingResponse } from './response';
+import { IncomingRequest } from './request';
+import { HttpErrorHandler, HTTP_ERROR_HANDLER } from '../error/error';
 
 /**
  * Multi provider token for upgrade handlers

@@ -4,7 +4,7 @@ import { IncomingMessage, IncomingHttpHeaders } from "http";
 import { Url, parse as UrlParse } from "url";
 import { TLSSocket } from "tls";
 import { Socket } from "net";
-import { HttpError } from "./HttpError";
+import { HttpError } from "../error/error";
 
 
 

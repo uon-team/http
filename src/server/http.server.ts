@@ -8,14 +8,19 @@ import * as https from 'https';
 import { Socket } from 'net';
 import { parse as ParseUrl } from 'url';
 
+import { HttpContext } from '../base/context';
+import { HttpConfig, HTTP_CONFIG } from './http.config';
+import { HTTP_PROVIDERS } from './http.providers';
 
-import { HttpContext } from './HttpContext';
-import { HttpConfig, HTTP_CONFIG, HTTP_PROVIDERS } from './HttpConfig';
-import { HttpError } from './HttpError';
-import { HTTP_REDIRECT_ROUTER, MatchMethodFunc, HttpRoute } from './HttpRouter';
+import { HTTP_REDIRECT_ROUTER, MatchMethodFunc, HttpRoute } from './http.router';
 
-import { HTTP_TLS_PROVIDER, TLSProvider } from './TlsProvider';
-import { MockIncomingMessage, MockServerResponse } from './Mock';
+import { HTTP_TLS_PROVIDER, TLSProvider } from './tls.provider';
+
+import { MockIncomingMessage } from '../mock/mock.incoming';
+import { MockOutgoingResponse } from '../mock/mock.outgoing';
+
+import { HttpError } from '../error/error';
+
 
 const ROUTER_MATCH_FUNCS = [MatchMethodFunc];
 
@@ -145,13 +150,12 @@ export class HttpServer extends EventSource {
         // fetch the root http router
         const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
 
-
         // create mock request object
         const mock_req = new MockIncomingMessage(options.url, options.method, options.headers || {}, options.body);
         mock_req.end();
 
         // create mock response object
-        const mock_res = new MockServerResponse();
+        const mock_res = new MockOutgoingResponse();
 
         const pathname = ParseUrl(options.url, false).pathname;
         const method = options.method.toUpperCase();

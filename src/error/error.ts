@@ -1,5 +1,6 @@
 
 import { STATUS_CODES } from 'http'
+import { InjectionToken } from '@uon/core';
 
 
 /**
@@ -53,6 +54,22 @@ export class HttpError extends Error {
  */
 export interface OnHttpError {
     onHttpError(err: HttpError): any;
+}
+
+
+
+/**
+ * Injection token for the http error handler
+ */
+export const HTTP_ERROR_HANDLER = new InjectionToken<HttpErrorHandler>("HTTP_ERROR_HANDLER");
+
+
+/**
+ * Interface for error handlers
+ */
+export interface HttpErrorHandler {
+
+    send(error: HttpError): void | Promise<void>;
 }
 
 

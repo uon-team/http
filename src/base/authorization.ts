@@ -1,7 +1,7 @@
 import { Injectable,  } from '@uon/core';
 import { Unquote } from '@uon/string-utils';
-import { IncomingRequest } from './IncomingRequest';
-import { OutgoingResponse, IOutgoingReponseModifier } from './OutgoingResponse';
+import { IncomingRequest } from './request';
+import { OutgoingResponse, IOutgoingReponseModifier } from './response';
 
 
 export interface WWWAuthenticateConfig {
@@ -28,7 +28,7 @@ const WWW_AUTH_CONFIG_DEFAULT: WWWAuthenticateConfig = {
  * Parsed authorization header
  */
 @Injectable()
-export class Authorization implements IOutgoingReponseModifier {
+export class Authorization {
 
     private _scheme: string;
     private _token: string;
