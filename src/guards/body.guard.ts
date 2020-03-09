@@ -1,10 +1,9 @@
 import { Injectable, Injector } from '@uon/core';
-import { IncomingRequest } from 'src/base/request';
-
 import { ActivatedRoute } from '@uon/router';
 
 import { HttpError } from '../error/error';
 import { RequestBody } from '../base/body';
+import { IncomingRequest } from '../base/request';
 
 /**
  * Configuration options for the request body

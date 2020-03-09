@@ -1,6 +1,6 @@
 import { Validator, ValidationFailure } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
-import { HttpError } from 'src/error/error';
+import { HttpError } from '../error/error';
 
 
 

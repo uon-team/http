@@ -1,6 +1,6 @@
 import { ValidationResult } from '@uon/model';
 import { Injectable } from '@uon/core';
-import { IncomingRequest } from 'src/base/request';
+import { IncomingRequest } from './request';
 import { ParsedUrlQuery } from 'querystring';
 
 /**
