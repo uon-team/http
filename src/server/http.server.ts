@@ -94,6 +94,12 @@ export class HttpServer extends EventSource {
      */
     async start() {
 
+        // module in serverless mode, do nothing
+        if(this.config.serverless === true) {
+            return;
+        }
+
+
         // maybe we already started this thing, we should let the user know
         if (this._started) {
             throw new Error('HttpServer already started');
@@ -102,6 +108,7 @@ export class HttpServer extends EventSource {
         // set the started flag to true right away
         this._started = true;
 
+        
 
         // create plain http server
         this.spawnHttpServer();

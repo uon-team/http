@@ -43,6 +43,12 @@ export interface HttpConfig {
      */
     routerToken?: InjectionToken<Router<any>>;
 
+
+    /**
+     * Starts the module without starting an http server
+     */
+    serverless?: boolean;
+
 }
 
 
