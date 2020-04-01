@@ -18,6 +18,7 @@ export * from './base/range';
 
 export * from './error/error';
 export * from './error/text.handler';
+export * from './error/json.handler';
 
 export * from './server/http.config'
 export * from './server/http.providers';
