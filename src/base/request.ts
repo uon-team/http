@@ -132,17 +132,18 @@ export class IncomingRequest {
 
     /**
      * Parses the following headers :
-     *  - X-Real-IP
+     *  - X-Forwarded-For
      *  - X-Forwarded-Proto
      */
     private parseForwardedHeaders() {
 
-        let real_ip = this._request.headers['x-real-ip'] as string;
+        let real_ip = this._request.headers['x-forwarded-for'];
         let real_proto = this._request.headers['x-forwarded-proto'] as string;
 
-        // check if x-real-ip is set
+        // parse x-forwarded-for to get the client ip
         if (real_ip) {
-            this._clientIp = real_ip;
+            let ff = Array.isArray(real_ip) ? real_ip[0] : real_ip as string;
+            this._clientIp = ff.split(',').map(f => f.trim())[0];
         }
 
         // check the original protocol for https
