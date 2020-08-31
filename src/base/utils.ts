@@ -57,6 +57,9 @@ function CoerceToType(type: any, raw_value: any) {
     else if (type === Number) {
         coerced_value = Number(raw_value)
     }
+    else if(type === String) {
+        coerced_value = raw_value;
+    }
 
     return coerced_value;
 }
