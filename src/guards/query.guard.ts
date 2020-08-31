@@ -22,13 +22,6 @@ export interface QueryGuardOptions<T> {
 
 
     /**
-     * If set, validate the body is an array, and validates each element 
-     * with the provided validators in 'validate'
-     */
-    validateArray?: boolean;
-
-
-    /**
      * Throws a 400 http error on validation failure if set to true.
      * Otherwise you have to handle the validation failure yourself.
      * Validation results are stored in RequestQuery.
