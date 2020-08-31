@@ -9,7 +9,8 @@ const INVALID_CHAR_TEST = /^[\u0009\u0020-\u007e\u0080-\u00ff]+$/;
 const DEFAULT_SET_COOKIE_OPTIONS = {
     httpOnly: true,
     session: false,
-    path: '/'
+    path: '/',
+    //sameSite: 'Lax'
 };
 
 export interface CookieSetOptions {
@@ -50,6 +51,9 @@ export interface CookieSetOptions {
      */
     session?: boolean;
 
+
+    sameSite?: 'None' | 'Lax' | 'Strict';
+
 }
 
 /**
@@ -84,7 +88,7 @@ export class Cookies implements IOutgoingReponseModifier {
     setCookie(name: string, value: string, options?: CookieSetOptions) {
 
         const opts: CookieSetOptions = Object.assign({}, DEFAULT_SET_COOKIE_OPTIONS, options);
-        opts.secure = this.request.secure;
+        opts.secure = this.request.secure || !!opts.secure;
 
         try {
             let result = this.serialize(name, value, opts);
@@ -204,16 +208,20 @@ export class Cookies implements IOutgoingReponseModifier {
             cookie_parts.push(`HttpOnly`);
         }
 
-        if (options.secure) {
-            cookie_parts.push(`Secure`);
-        }
-
         if (options.path) {
             cookie_parts.push(`Path=${options.path}`);
         }
 
         if (options.domain) {
             cookie_parts.push(`Domain=${options.domain}`);
+        }
+
+        if(options.sameSite) {
+            cookie_parts.push(`SameSite=${options.sameSite}`);
+        }
+
+        if (options.secure) {
+            cookie_parts.push(`Secure`);
         }
 
 
