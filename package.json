@@ -1,6 +1,6 @@
 {
     "name": "@uon/http",
-    "version": "0.10.1",
+    "version": "0.11.0",
     "description": "Framework for building precise REST applications",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -8,13 +8,13 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "peerDependencies": {
-        "@uon/core": "^0.9.1",
-        "@uon/model": "^0.9.1",
-        "@uon/router": "^0.9.1",
-        "tslib": "^1.10.0"
+        "@uon/core": "^0.11.0",
+        "@uon/model": "^0.11.0",
+        "@uon/router": "^0.11.0"
     },
     "dependencies": {
-        "@uon/string-utils": "^1.0.0"
+        "@uon/string-utils": "^1.0.0",
+        "tslib": "^2.3.1"
     },
     "devDependencies": {
         "@types/node": "^10.17.5"
