@@ -271,7 +271,7 @@ function AwaitStream(stream: Stream) {
 }
 
 
-function Filter(target: any, fields: string[]) {
+function _Filter(target: any, fields: string[]) {
     let result: any = {};
     for (let i = 0; i < fields.length; ++i) {
         let field = fields[i];
@@ -279,4 +279,13 @@ function Filter(target: any, fields: string[]) {
     }
 
     return result;
+}
+
+function Filter(target: any, fields: string[]) {
+    if(Array.isArray(target)) {
+        return target.map((el) => {
+            return _Filter(el, fields);
+        });
+    }
+    return _Filter(target, fields);
 }

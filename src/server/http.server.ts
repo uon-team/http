@@ -20,6 +20,8 @@ import { MockIncomingMessage } from '../mock/mock.incoming';
 import { MockOutgoingResponse } from '../mock/mock.outgoing';
 
 import { HttpError } from '../error/error';
+import { FindModelAnnotation, ID } from '@uon/model';
+import { Readable } from 'stream';
 
 
 const ROUTER_MATCH_FUNCS = [MatchMethodFunc];
@@ -95,7 +97,7 @@ export class HttpServer extends EventSource {
     async start() {
 
         // module in serverless mode, do nothing
-        if(this.config.serverless === true) {
+        if (this.config.serverless === true) {
             return;
         }
 
@@ -108,7 +110,7 @@ export class HttpServer extends EventSource {
         // set the started flag to true right away
         this._started = true;
 
-        
+
 
         // create plain http server
         this.spawnHttpServer();
@@ -187,7 +189,13 @@ export class HttpServer extends EventSource {
         try {
 
             // execute the http context
-            await http_context.process(match);
+            let res_data = await http_context.process(match);
+
+            // the context might have sent a response already,
+            // in which case we can ignore the data
+            if (!http_context.response.sent) {
+                await this.trySendResponseData(http_context, match, res_data);
+            }
 
             // make sure a response was sent
             if (!http_context.response.sent) {
@@ -328,7 +336,13 @@ export class HttpServer extends EventSource {
             await this.emit('request', http_context);
 
             // execute the http context
-            await http_context.process(match);
+            let res_data = await http_context.process(match);
+
+            // the context might have sent a response already,
+            // in which case we can ignore the data
+            if (!http_context.response.sent) {
+                await this.trySendResponseData(http_context, match, res_data);
+            }
 
             // make sure a response was sent
             if (!http_context.response.sent) {
@@ -360,6 +374,24 @@ export class HttpServer extends EventSource {
             }
 
         }
+
+    }
+
+    private async trySendResponseData(context: HttpContext, match: RouteMatch, data: any) {
+
+        if (data) {
+
+            if (data instanceof Readable) {
+                context.response.stream(data);
+            }
+            else {
+                // default to json
+                context.response.json(data);
+            }
+
+        }
+
+        return context.response.finish();
 
     }
 
@@ -459,3 +491,5 @@ export class HttpServer extends EventSource {
     }
 
 }
+
+

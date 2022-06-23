@@ -17,6 +17,7 @@ export class MockIncomingMessage extends Transform {
     socket: Socket;
     trailers: { [key: string]: string | undefined };
     rawTrailers: string[];
+    aborted: boolean;
 
     constructor(readonly url: string,
         readonly method: string,
