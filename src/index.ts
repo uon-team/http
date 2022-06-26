@@ -25,6 +25,7 @@ export * from './server/http.providers';
 export * from './server/http.router';
 export * from './server/http.server';
 export * from './server/tls.provider';
+export * from './server/serverless';
 
 export * from './guards/body.guard';
 export * from './guards/body.formdata.guard';
