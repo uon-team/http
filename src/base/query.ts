@@ -4,7 +4,7 @@ import { IncomingRequest } from './request';
 import { ParsedUrlQuery } from 'querystring';
 
 /**
- * Object containing the parsed query string as key/value map
+ * Object containing the parsed query string as key/value map.
  * If QueryGuard is used, coersed values are assigned to this object
  */
 @Injectable()
@@ -20,14 +20,15 @@ export class RequestQuery<T = any> {
     }
 
     /**
-    * The unparsed body buffer
+    * The unparsed query object
     */
     get raw() {
         return this._raw;
     }
 
     /**
-     * The parsed json value
+     * The type coersed object
+     * null if QueryGuard was not used
      */
     get value(): T {
         return this._data;

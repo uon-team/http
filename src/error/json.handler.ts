@@ -2,7 +2,7 @@
 
 
 
-import { Injectable, InjectionToken} from "@uon/core";
+import { Injectable, InjectionToken } from "@uon/core";
 
 import { IncomingRequest } from "../base/request";
 import { OutgoingResponse } from "../base/response";
@@ -41,7 +41,7 @@ export class HttpErrorJsonHandler implements HttpErrorHandler {
 
         }
         else if (err.data) {
-            data = err.data;
+            data = { message: err.message, context: err.data };
         }
 
         this.res.json(data);

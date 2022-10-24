@@ -38,8 +38,6 @@ export class Range implements IOutgoingReponseModifier {
 
     /**
      * Create an interface to manipulate range and parse the range headers
-     * @param context 
-     * @param config 
      */
     constructor(private request: IncomingRequest) {
 

@@ -81,11 +81,13 @@ export function FormDataBodyGuard<T>(type?: Type<T>, options: FormDataBodyGuardO
 
             json_body._data = result;
 
+            //console.log(buffer.toString('utf8'), result);
+
             // run validation
             const validation_result = await Validate(json_body.value, options.validate, this.injector);
 
             if (options.throwOnValidation !== false && !validation_result.valid) {
-                throw new HttpError(400,
+                throw new HttpError(422,
                     new Error(validation_result.failures.map(f => f.reason).join('\r\n')),
                     validation_result);
             }

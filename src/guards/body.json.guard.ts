@@ -102,7 +102,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             // validate is array
             const is_array = Array.isArray(this.body.value);
             if (options.validateArray === true && !is_array) {
-                throw new HttpError(400, new Error('expected array'));
+                throw new HttpError(422, new Error('expected json array'));
             }
 
             const subject = is_array ? this.body.value : [this.body.value];
@@ -115,7 +115,7 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
                 validation_results.push(validation_result);
 
                 if (options.throwOnValidation !== false && !validation_result.valid) {
-                    throw new HttpError(400,
+                    throw new HttpError(422,
                         new Error(validation_result.failures.map(f => `${f.key}: ${f.reason}`).join('\r\n')),
                         validation_result);
                 }

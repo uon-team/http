@@ -16,28 +16,44 @@ export function CreateHttpAwsLambdaHandler(app: Application) {
         let main_module = await app.start();
         let http = await main_module.injector.getAsync(HttpServer);
 
+        // format body into buffer
         let req_body: Buffer | null = null;
-        if(event.body) {
+        if (event.body) {
             req_body = Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8');
-
         }
+
+        // combine headers into one object
+        let req_headers = Object.assign({}, event.headers, event.multiValueHeaders);
 
         // we expect input from API Gateway
         let res = await http.mockRequest({
             method: event.httpMethod,
             url: event.path,
-            headers: event.headers,
+            headers: req_headers,
             body: req_body
         });
 
+        let single_headers: { [k: string]: string } = {};
+        let multi_headers: { [k: string]: string[] } = {};
+        for (let i in res.headers) {
+            if (Array.isArray(res.headers[i])) {
+                multi_headers[i] = res.headers[i] as string[];
+            }
+            else {
+                single_headers[i] = res.headers[i] as string;
+            }
+        }
 
-        return {
+        let result = {
             statusCode: res.statusCode,
-            headers: res.headers,
+            headers: single_headers,
+            multiValueHeaders: multi_headers,
             isBase64Encoded: false,
             body: res.body.toString('utf8')
         };
-        
+
+        return result;
+
 
     };
 }

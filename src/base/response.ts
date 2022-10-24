@@ -134,13 +134,20 @@ export class OutgoingResponse {
      * @param location The url to redirect to
      * @param permanent Whether this is meant to be a permanent redirection (301 vs 302)
      */
-    redirect(location: string, permanent?: boolean) {
+    async redirect(location: string, permanent?: boolean) {
 
+        
+        this.setHeader('Location', location);
+        this.statusCode = permanent === true ? 301 : 302;
+
+        /*
         this._response.writeHead(permanent === true ? 301 : 302, {
             'Location': location
         });
 
-        this._response.end();
+        this._response.end();*/
+
+        return this.finish();
 
     }
 

@@ -3,6 +3,21 @@ import { Type } from '@uon/core';
 
 
 
+export function ParseWeightedValuesString(str: string): [string, number][] {
+
+    let values = str.split(',').map(s => s.trim());
+
+    let val_q_tuples: [string, number][] = values.map(s => {
+        let q = 1.0;
+        let lq = s.split(';');
+        if (lq.length > 1) {
+            q = parseFloat(lq[1].replace('q=', ''));
+        }
+        return [lq[0], q];
+    });
+
+    return val_q_tuples;
+}
 
 
 export function TryCoerceToModel(members: Member[], values: any) {
@@ -16,7 +31,7 @@ export function TryCoerceToModel(members: Member[], values: any) {
         let raw_value = values[k];
         let coerced_value = undefined;
 
-        if(m instanceof ArrayMember) {
+        if (m instanceof ArrayMember) {
             let arr = Array.isArray(raw_value) ? raw_value : [raw_value];
             coerced_value = arr.map(v => CoerceToType(m.type, v));
         }
@@ -48,7 +63,7 @@ function CoerceToType(type: any, raw_value: any) {
     else if (raw_value === 'false') {
         coerced_value = false;
     }
-    else if(type === Boolean) {
+    else if (type === Boolean) {
         coerced_value = raw_value === 'true';
     }
     else if (type === Date) {
@@ -57,7 +72,7 @@ function CoerceToType(type: any, raw_value: any) {
     else if (type === Number) {
         coerced_value = Number(raw_value)
     }
-    else if(type === String) {
+    else if (type === String) {
         coerced_value = raw_value;
     }
 

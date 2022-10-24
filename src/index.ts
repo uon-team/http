@@ -6,6 +6,7 @@ MIT Licensed
 *********************************************************************************
 */
 
+export * from './base/accept';
 export * from './base/authorization';
 export * from './base/expires';
 export * from './base/context';
