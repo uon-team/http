@@ -29,8 +29,13 @@ export function TryCoerceToModel(members: Member[], values: any) {
         const k = m.key;
 
         let raw_value = values[k];
-        let coerced_value = undefined;
 
+        // can't coerse undefined as it will lead to validation problems
+        if(raw_value === undefined) {
+            return;
+        }
+
+        let coerced_value = undefined;
         if (m instanceof ArrayMember) {
             let arr = Array.isArray(raw_value) ? raw_value : [raw_value];
             coerced_value = arr.map(v => CoerceToType(m.type, v));
@@ -70,7 +75,7 @@ function CoerceToType(type: any, raw_value: any) {
         coerced_value = new Date(raw_value);
     }
     else if (type === Number) {
-        coerced_value = Number(raw_value)
+        coerced_value = Number(raw_value);
     }
     else if (type === String) {
         coerced_value = raw_value;
