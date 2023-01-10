@@ -34,6 +34,20 @@ export interface MockRequestOptions {
     body?: Buffer;
 }
 
+export interface RequestTiming {
+    setup: number;
+    process: number;
+    response: number;
+    errorHandling: number;
+
+}
+
+export interface ResponseEvent {
+    context: HttpContext;
+    error?: HttpError;
+    timing: RequestTiming;
+}
+
 /**
  * 
  */
@@ -132,6 +146,11 @@ export class HttpServer extends EventSource {
      * Add an event listener that will be called on every request
      */
     on(type: 'request', callback: (context: HttpContext) => any, priority?: number): void;
+
+    /**
+     * Add an event listener that will be called on every request
+     */
+    on(type: 'response', callback: (event: ResponseEvent) => any, priority?: number): void;
 
     /**
      * Add an event listener that will be called when an HttpError occurs
@@ -304,7 +323,14 @@ export class HttpServer extends EventSource {
     private async handleRequest(req: IncomingMessage, res: ServerResponse) {
 
         // the time the handling of the request started
-        const current_time = Date.now();
+        let start_time = process.hrtime();
+
+        const request_timing: RequestTiming = {
+            setup: -1,
+            process: -1,
+            response: -1,
+            errorHandling: -1
+        };
 
         // fetch the root http router
         const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
@@ -328,6 +354,8 @@ export class HttpServer extends EventSource {
             traceErrors: this.config.traceContextErrors
         });
 
+        request_timing.setup = HRTimeToMs(process.hrtime(start_time));
+       
 
         // try processing it
         try {
@@ -335,8 +363,13 @@ export class HttpServer extends EventSource {
             // emit the request event first
             await this.emit('request', http_context);
 
+            start_time = process.hrtime();
+
             // execute the http context
             let res_data = await http_context.process(match);
+
+            request_timing.process = HRTimeToMs(process.hrtime(start_time));
+            start_time = process.hrtime();
 
             // the context might have sent a response already,
             // in which case we can ignore the data
@@ -344,13 +377,26 @@ export class HttpServer extends EventSource {
                 await this.trySendResponseData(http_context, match, res_data);
             }
 
+            request_timing.response = HRTimeToMs(process.hrtime(start_time));
+
             // make sure a response was sent
             if (!http_context.response.sent) {
                 console.error(`RouterOutlet ${match.outlet.name}.${match.handler.methodKey} did not provide a response.`);
                 throw new HttpError(501);
             }
+
+
+            await this.emit('response', <ResponseEvent>{ context: http_context, error: null, timing: request_timing });
+
+
         }
         catch (ex) {
+
+            if (request_timing.process == -1) {
+                request_timing.process = HRTimeToMs(process.hrtime(start_time));
+            }
+
+            start_time = process.hrtime();
 
             // must be HttpError from this point
             let error = ex instanceof HttpError
@@ -372,6 +418,10 @@ export class HttpServer extends EventSource {
                 http_context.response.send(error.message);
 
             }
+
+            request_timing.errorHandling = HRTimeToMs(process.hrtime(start_time));
+
+            await this.emit('response', <ResponseEvent>{ context: http_context, error: error, timing: request_timing });
 
         }
 
@@ -492,4 +542,10 @@ export class HttpServer extends EventSource {
 
 }
 
+
+
+function HRTimeToMs(time: [number, number]) {
+
+    return (time[0] * 1000) + (time[1] / 1000000);
+}
 

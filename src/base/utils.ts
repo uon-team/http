@@ -36,6 +36,11 @@ export function TryCoerceToModel(members: Member[], values: any) {
         }
 
         let coerced_value = undefined;
+
+        if(m.coerse) {
+            raw_value = m.coerse(raw_value);
+        }
+        
         if (m instanceof ArrayMember) {
             let arr = Array.isArray(raw_value) ? raw_value : [raw_value];
             coerced_value = arr.map(v => CoerceToType(m.type, v));
