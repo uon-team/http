@@ -1,4 +1,4 @@
-import { ValidationResult } from '@uon/model';
+import { ModelValidationResult, ValidationResult } from '@uon/model';
 
 /**
  * Access to the request body
@@ -9,7 +9,7 @@ export class RequestBody<T = any> {
 
     private _data: T;
     private _raw: Buffer;
-    private _validation: ValidationResult<T>;
+    private _validation: ModelValidationResult<T>;
 
     /**
      * The unparsed body buffer
@@ -28,7 +28,7 @@ export class RequestBody<T = any> {
     /**
      * The result of the validation 
      */
-    get validation(): ValidationResult<T> {
+    get validation(): ModelValidationResult<T> {
         return this._validation;
     }
 }

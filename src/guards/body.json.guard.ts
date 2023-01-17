@@ -1,5 +1,5 @@
 import { PropertyNamesNotOfType, Type } from '@uon/core';
-import { Validator, Model, JsonSerializer, FindModelAnnotation, Validate } from '@uon/model';
+import { Model, JsonSerializer, FindModelAnnotation, Validate, ModelValidationResult, Validator } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 
 import { BodyGuardService } from './body.guard';
@@ -105,23 +105,31 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
                 throw new HttpError(422, new Error('expected json array'));
             }
 
-            const subject = is_array ? this.body.value : [this.body.value];
-            const validation_results: any[] = [];
 
-            for (let i = 0; i < subject.length; ++i) {
+            let validation_result: ModelValidationResult<any>;
 
-                // run validation
-                const validation_result = await Validate(subject[i], options.validate, this.injector, i);
-                validation_results.push(validation_result);
+            if (is_array) {
+                const subject = this.body.value as any[];
+                validation_result = new ModelValidationResult<any>('body');
 
-                if (options.throwOnValidation !== false && !validation_result.valid) {
-                    throw new HttpError(422,
-                        new Error(validation_result.failures.map(f => `${f.key}: ${f.reason}`).join('\r\n')),
-                        validation_result);
+                for (let i = 0; i < subject.length; ++i) {
+                    const item_result = await Validate(subject[i], options.validate, this.injector, String(i));
+                    validation_result.children[i] = item_result;
+
                 }
             }
+            else {
+                validation_result = await Validate(this.body.value, options.validate, this.injector, 'body');
+            }
 
-            json_body._validation = validation_results;
+            if (options.throwOnValidation !== false && !validation_result.valid) {
+                throw new HttpError(422,
+                    new Error("body validation failure"),
+                    validation_result);
+            }
+
+
+            json_body._validation = validation_result;
 
             return true;
         }

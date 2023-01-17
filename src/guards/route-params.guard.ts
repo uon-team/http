@@ -1,4 +1,4 @@
-import { Validator, ValidationFailure } from '@uon/model';
+import { Validator, ValidationFailure, ModelValidationResult, ValidationResult } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 import { HttpError } from '../error/error';
 
@@ -16,6 +16,8 @@ export function RouteParamsGuard(validators: { [k: string]: Validator[] }) {
         const errors: string[] = [];
         const error_data: any = {};
 
+        const validation_results = new ModelValidationResult<any>('route_params');
+
         for (let i = 0; i < validate_keys.length; ++i) {
             const k = validate_keys[i];
 
@@ -28,9 +30,13 @@ export function RouteParamsGuard(validators: { [k: string]: Validator[] }) {
                         v(ar.params, k, ar.params[k])
                     }
                     catch (err) {
+
+                        if (!validation_results.children[k]) {
+                            validation_results.children[k] = new ValidationResult<any>(k);
+                        }
+
                         if (err instanceof ValidationFailure) {
-                            errors.push(err.reason);
-                            error_data[k] = err.reason;
+                            validation_results.children[k].failures.push(err);
                         }
                     }
                 });
@@ -38,8 +44,8 @@ export function RouteParamsGuard(validators: { [k: string]: Validator[] }) {
 
         }
 
-        if (errors.length) {
-            throw new HttpError(400, new Error(errors.join('\r\n')), { paramsError: error_data });
+        if (!validation_results.valid) {
+            throw new HttpError(422, new Error('route parameters validation failure'), validation_results);
         }
 
         return true;

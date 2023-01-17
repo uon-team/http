@@ -63,11 +63,11 @@ export function QueryGuard<T>(type?: Type<T>, options: QueryGuardOptions<T> = {}
             rq._data = result;
 
             // run validation
-            const validation_result = await Validate(rq.value, options.validate, this.injector);
+            const validation_result = await Validate(rq.value, options.validate, this.injector, 'query');
 
             if (options.throwOnValidation !== false && !validation_result.valid) {
-                throw new HttpError(400,
-                    new Error(validation_result.failures.map(f => f.reason).join('\r\n')),
+                throw new HttpError(422,
+                    new Error("query validation failure"),
                     validation_result);
             }
 
