@@ -1,6 +1,6 @@
 import { Type, PropertyNamesNotOfType, Injectable, Injector } from '@uon/core';
 import { ActivatedRoute } from '@uon/router';
-import { Validator, Model, JsonSerializer, FindModelAnnotation, Validate, GetModelMembers } from '@uon/model';
+import { Validator, Model, JsonSerializer, FindModelAnnotation, Validate, GetModelMembers, ApplyFormatting } from '@uon/model';
 
 import { HttpError } from '../error/error';
 import { RequestQuery } from '../base/query';
@@ -72,6 +72,11 @@ export function QueryGuard<T>(type?: Type<T>, options: QueryGuardOptions<T> = {}
             }
 
             rq._validation = validation_result;
+
+            // run formatting
+            if(type) {
+                ApplyFormatting(result);
+            }
 
             return true;
         }

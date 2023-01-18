@@ -1,5 +1,5 @@
 import { Type } from '@uon/core';
-import { Validator, Validate, Model, JsonSerializer, FindModelAnnotation, GetModelMembers } from '@uon/model';
+import { Validator, Validate, Model, JsonSerializer, FindModelAnnotation, GetModelMembers, ApplyFormatting } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 import { parse as ParseFormData } from 'querystring'
 
@@ -93,6 +93,11 @@ export function FormDataBodyGuard<T>(type?: Type<T>, options: FormDataBodyGuardO
             }
 
             json_body._validation = validation_result;
+
+            // run formatting
+            if (type) {
+                ApplyFormatting(result);
+            }
 
             return true;
 

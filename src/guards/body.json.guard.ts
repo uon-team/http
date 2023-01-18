@@ -1,5 +1,5 @@
 import { PropertyNamesNotOfType, Type } from '@uon/core';
-import { Model, JsonSerializer, FindModelAnnotation, Validate, ModelValidationResult, Validator } from '@uon/model';
+import { Model, JsonSerializer, FindModelAnnotation, Validate, ModelValidationResult, Validator, ApplyFormatting } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 
 import { BodyGuardService } from './body.guard';
@@ -115,7 +115,6 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
                 for (let i = 0; i < subject.length; ++i) {
                     const item_result = await Validate(subject[i], options.validate, this.injector, String(i));
                     validation_result.children[i] = item_result;
-
                 }
             }
             else {
@@ -128,8 +127,19 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
                     validation_result);
             }
 
-
             json_body._validation = validation_result;
+
+
+            // format
+            if (is_array) {
+                const subject = this.body.value as any[];
+                for (let i = 0; i < subject.length; ++i) {
+                    ApplyFormatting(subject[i]);
+                }
+            }
+            else {
+                ApplyFormatting(this.body.value);
+            }
 
             return true;
         }

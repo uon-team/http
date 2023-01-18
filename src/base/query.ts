@@ -5,7 +5,7 @@ import { ParsedUrlQuery } from 'querystring';
 
 /**
  * Object containing the parsed query string as key/value map.
- * If QueryGuard is used, coersed values are assigned to this object
+ * If QueryGuard is used, coerced values are assigned to this object
  */
 @Injectable()
 export class RequestQuery<T = any> {
@@ -27,7 +27,7 @@ export class RequestQuery<T = any> {
     }
 
     /**
-     * The type coersed object
+     * The type coerced object
      * null if QueryGuard was not used
      */
     get value(): T {

@@ -30,15 +30,15 @@ export function TryCoerceToModel(members: Member[], values: any) {
 
         let raw_value = values[k];
 
-        // can't coerse undefined as it will lead to validation problems
+        // can't coerce undefined as it will lead to validation problems
         if(raw_value === undefined) {
             return;
         }
 
         let coerced_value = undefined;
 
-        if(m.coerse) {
-            raw_value = m.coerse(raw_value);
+        if(m.coerce) {
+            raw_value = m.coerce(raw_value);
         }
         
         if (m instanceof ArrayMember) {
