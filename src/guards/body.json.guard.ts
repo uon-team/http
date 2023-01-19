@@ -131,15 +131,18 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 
 
             // format
-            if (is_array) {
-                const subject = this.body.value as any[];
-                for (let i = 0; i < subject.length; ++i) {
-                    ApplyFormatting(subject[i]);
+            if (type) {
+                if (is_array) {
+                    const subject = this.body.value as any[];
+                    for (let i = 0; i < subject.length; ++i) {
+                        ApplyFormatting(subject[i]);
+                    }
+                }
+                else {
+                    ApplyFormatting(this.body.value);
                 }
             }
-            else {
-                ApplyFormatting(this.body.value);
-            }
+
 
             return true;
         }
