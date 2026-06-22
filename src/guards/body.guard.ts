@@ -70,12 +70,16 @@ export class BodyGuardService {
         // check if content-length is bigger than the max allowed body size
         if (config.maxLength) {
 
-            let header_length_str = this.request.headers['content-length'];
+            const raw_length = this.request.headers['content-length'];
+            const header_length_str = Array.isArray(raw_length) ? raw_length[0] : raw_length;
             if (!header_length_str) {
                 throw new HttpError(411, new Error(`Content-Length header field must be set.`));
             }
 
-            let header_length = parseInt(header_length_str);
+            let header_length = parseInt(header_length_str, 10);
+            if (isNaN(header_length)) {
+                throw new HttpError(400, new Error(`Content-Length header field is not a valid number.`));
+            }
             if (header_length > config.maxLength) {
                 throw new HttpError(413, new Error(`Content-Length of ${header_length} exceeds the limit of ${config.maxLength}.`));
             }

@@ -10,9 +10,9 @@ import { ParsedUrlQuery } from 'querystring';
 @Injectable()
 export class RequestQuery<T = any> {
 
-    private _data: T;
+    private _data!: T;
     private _raw: ParsedUrlQuery;
-    private _validation: ValidationResult<T>;
+    private _validation!: ValidationResult<T>;
 
 
     constructor(private _request: IncomingRequest) {

@@ -30,7 +30,7 @@ export function CreateHttpAwsLambdaHandler(app: Application) {
             method: event.httpMethod,
             url: event.path,
             headers: req_headers,
-            body: req_body
+            body: req_body ?? undefined
         });
 
         let single_headers: { [k: string]: string } = {};
@@ -44,12 +44,17 @@ export function CreateHttpAwsLambdaHandler(app: Application) {
             }
         }
 
+        // encode the body as utf8 when it round-trips losslessly, otherwise
+        // base64 so binary responses aren't corrupted
+        const body_buf: Buffer = Buffer.isBuffer(res.body) ? res.body : Buffer.from(res.body || '');
+        const is_text = Buffer.from(body_buf.toString('utf8'), 'utf8').equals(body_buf);
+
         let result = {
             statusCode: res.statusCode,
             headers: single_headers,
             multiValueHeaders: multi_headers,
-            isBase64Encoded: false,
-            body: res.body.toString('utf8')
+            isBase64Encoded: !is_text,
+            body: is_text ? body_buf.toString('utf8') : body_buf.toString('base64')
         };
 
         return result;

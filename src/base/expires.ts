@@ -26,16 +26,20 @@ export interface ExpiresOptions {
 export class Expires implements IOutgoingReponseModifier {
 
 
-    readonly ifModifiedSince: Date;
-    private _options: ExpiresOptions;
+    readonly ifModifiedSince?: Date;
+    private _options!: ExpiresOptions;
 
 
     constructor(private request: IncomingRequest) {
 
-        // check for if modified since header
+        // check for if modified since header (ignore an unparseable date so we
+        // don't carry an Invalid Date into the 304 comparison)
         let req_date = request.headers["if-modified-since"];
         if (req_date) {
-            this.ifModifiedSince = new Date(req_date as string);
+            const parsed = new Date(req_date as string);
+            if (!isNaN(parsed.getTime())) {
+                this.ifModifiedSince = parsed;
+            }
         }
 
     }

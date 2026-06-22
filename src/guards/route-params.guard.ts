@@ -31,13 +31,16 @@ export function RouteParamsGuard(validators: { [k: string]: Validator[] }) {
                     }
                     catch (err) {
 
+                        // don't swallow unexpected (non-validation) errors
+                        if (!(err instanceof ValidationFailure)) {
+                            throw err;
+                        }
+
                         if (!validation_results.children[k]) {
                             validation_results.children[k] = new ValidationResult<any>(k);
                         }
 
-                        if (err instanceof ValidationFailure) {
-                            validation_results.children[k].failures.push(err);
-                        }
+                        validation_results.children[k].failures.push(err);
                     }
                 });
             }

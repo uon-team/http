@@ -9,11 +9,20 @@ export function ParseWeightedValuesString(str: string): [string, number][] {
 
     let val_q_tuples: [string, number][] = values.map(s => {
         let q = 1.0;
-        let lq = s.split(';');
-        if (lq.length > 1) {
-            q = parseFloat(lq[1].replace('q=', ''));
+        let parts = s.split(';');
+
+        // find the q= parameter among any other parameters; default to 1.0
+        for (let i = 1; i < parts.length; ++i) {
+            let p = parts[i].trim();
+            if (p.indexOf('q=') === 0) {
+                let parsed = parseFloat(p.substring(2));
+                if (!isNaN(parsed)) {
+                    q = parsed;
+                }
+            }
         }
-        return [lq[0], q];
+
+        return [parts[0].trim(), q];
     });
 
     return val_q_tuples;
@@ -62,29 +71,31 @@ export function TryCoerceToModel(members: Member[], values: any) {
 
 function CoerceToType(type: any, raw_value: any) {
 
-    let coerced_value = undefined;
+    // a declared String keeps the literal text (so 'true'/'false'/'null' are not
+    // turned into a boolean/null for string-typed members)
+    if (type === String) {
+        return raw_value;
+    }
 
     if (raw_value === 'null') {
-        coerced_value = null;
+        return null;
     }
-    else if (raw_value === 'true') {
-        coerced_value = true;
+    if (raw_value === 'true') {
+        return true;
     }
-    else if (raw_value === 'false') {
-        coerced_value = false;
+    if (raw_value === 'false') {
+        return false;
     }
-    else if (type === Boolean) {
-        coerced_value = raw_value === 'true';
+    if (type === Boolean) {
+        return raw_value === 'true';
     }
-    else if (type === Date) {
-        coerced_value = new Date(raw_value);
+    if (type === Date) {
+        return new Date(raw_value);
     }
-    else if (type === Number) {
-        coerced_value = Number(raw_value);
-    }
-    else if (type === String) {
-        coerced_value = raw_value;
+    if (type === Number) {
+        return Number(raw_value);
     }
 
-    return coerced_value;
+    // unknown type: return the raw value rather than dropping it
+    return raw_value;
 }

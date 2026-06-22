@@ -34,7 +34,7 @@ export interface JsonResponseConfig {
 export class OutgoingResponse {
 
     private _modifiers: IOutgoingReponseModifier[] = [];
-    private _inputStream: Stream;
+    private _inputStream!: Stream;
 
     private _statusCode: number = 200;
     private _headers: OutgoingHttpHeaders = {};
@@ -115,11 +115,13 @@ export class OutgoingResponse {
     async send(data: Buffer | string | null, encoding?: string) {
 
 
-        if (data) {
+        // null/undefined => no body (204/empty). An empty string is a valid
+        // zero-length body and must still be streamed.
+        if (data != null) {
             // create readable stream from data
             let readable = new Readable();
-            readable.push(data, encoding);
-            data && readable.push(null);
+            readable.push(data, encoding as BufferEncoding);
+            readable.push(null);
 
             // stream response
             this.stream(readable);
@@ -163,7 +165,7 @@ export class OutgoingResponse {
 
             let result: string = typeof payload === 'string'
                 ? payload
-                : JSON.stringify(options.keep ? Filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
+                : JSON.stringify(options.keep ? Filter(payload, options.keep) : payload, null, options.pretty ? '\t' : undefined);
 
             // prefix output if specified in options
             if (options.prefixOutput) {
@@ -272,8 +274,12 @@ class ClosureResponseModifer implements IOutgoingReponseModifier {
 
 function AwaitStream(stream: Stream) {
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        // resolve on end/close and reject on error so a failing input stream
+        // (eg. a file read error during range streaming) can't hang finish()
         stream.on('end', resolve);
+        stream.on('close', resolve);
+        stream.on('error', reject);
     });
 }
 
