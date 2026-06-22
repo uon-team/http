@@ -81,23 +81,23 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             json_body._raw = buffer;
 
 
-            // try parsing json
+            // parse json — a malformed body is a 400, not a silent guard failure
+            let obj: any;
             try {
-
-                const obj = JSON.parse(buffer.toString('utf8'));
-                const result = type
-                    ? (Array.isArray(obj)
-                        ? (obj as any[]).map(o => serializer.deserialize(o, false))
-                        : serializer.deserialize(obj, false))
-                    : obj;
-
-                // assign data to the JsonBody provider
-                json_body._data = result;
-
+                obj = JSON.parse(buffer.toString('utf8'));
             }
             catch (ex) {
-                return false;
+                throw new HttpError(400, new Error('Request body is not valid JSON.'));
             }
+
+            const result = type
+                ? (Array.isArray(obj)
+                    ? (obj as any[]).map(o => serializer.deserialize(o, false))
+                    : serializer.deserialize(obj, false))
+                : obj;
+
+            // assign data to the JsonBody provider
+            json_body._data = result;
 
             // validate is array
             const is_array = Array.isArray(this.body.value);

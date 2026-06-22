@@ -14,7 +14,7 @@ export class MockOutgoingResponse extends Transform {
     chunkedEncoding: boolean;
     shouldKeepAlive: boolean;
     useChunkedEncodingByDefault: boolean;
-    sendDate: boolean;;
+    sendDate: boolean;
     headersSent: boolean;
     connection: Socket;
 

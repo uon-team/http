@@ -98,39 +98,65 @@ export class Range implements IOutgoingReponseModifier {
             return;
         }
 
-        const start_byte = this._start;
         const src_path = this._options.path;
 
-        if (start_byte !== undefined) {
-
-            let stats = await FSPromise.stat(src_path);
-            const total_size = stats.size;
-
-            this._end = Math.min(start_byte + this._options.maxChunkSize, this._end || total_size - 1);
-
-            if (this._end >= total_size) {
-                throw new HttpError(416);
-            }
-
-            // compute the chunk size
-            let chunk_size = (this._end - start_byte) + 1;
-
-            // if the chunk is actually the full file size, status is 200, else 206
-            response.statusCode = chunk_size === total_size ? 200 : 206;
-
-            // we are sending a a byte range, set the headers
-            response.assignHeaders({
-                "Content-Length": chunk_size,
-                "Content-Range": `bytes ${start_byte}-${this._end}/${total_size}`,
-                "Accept-Ranges": "bytes"
-            });
-
-            // set input stream with range
-            response.stream(createReadStream(src_path, this.range));
-
-
+        // nothing requested -> let the caller stream the full file
+        if ((this._start === undefined || isNaN(this._start)) &&
+            (this._end === undefined || isNaN(this._end))) {
+            return;
         }
 
+        const stats = await FSPromise.stat(src_path);
+        const total_size = stats.size;
+        const max_chunk = this._options.maxChunkSize;
+
+        let start = this._start;
+        let end = this._end;
+
+        if ((start === undefined || isNaN(start)) && typeof end === 'number' && !isNaN(end)) {
+            // suffix range "bytes=-N": the last N bytes
+            start = Math.max(0, total_size - end);
+            end = total_size - 1;
+        }
+        else {
+            // "bytes=N-" or "bytes=N-M"
+            if (start === undefined || isNaN(start)) {
+                throw new HttpError(416);
+            }
+            if (end === undefined || isNaN(end)) {
+                end = total_size - 1;
+            }
+            // cap the chunk to maxChunkSize when configured
+            if (typeof max_chunk === 'number' && max_chunk > 0) {
+                end = Math.min(end, start + max_chunk - 1);
+            }
+            // never read past the end of the file
+            end = Math.min(end, total_size - 1);
+        }
+
+        // unsatisfiable range (start past EOF, negative, or inverted)
+        if (start < 0 || start >= total_size || end < start) {
+            throw new HttpError(416);
+        }
+
+        // store the resolved range so this.range reflects it
+        this._start = start;
+        this._end = end;
+
+        const chunk_size = (end - start) + 1;
+
+        // if the chunk is actually the full file size, status is 200, else 206
+        response.statusCode = chunk_size === total_size ? 200 : 206;
+
+        // we are sending a byte range, set the headers
+        response.assignHeaders({
+            "Content-Length": chunk_size,
+            "Content-Range": `bytes ${start}-${end}/${total_size}`,
+            "Accept-Ranges": "bytes"
+        });
+
+        // set input stream with the resolved range (end is inclusive)
+        response.stream(createReadStream(src_path, { start, end }));
 
     }
 

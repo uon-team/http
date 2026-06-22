@@ -1,5 +1,5 @@
 
-import { InjectionToken, Injectable, MakeUnique } from '@uon/core';
+import { InjectionToken, Injectable } from '@uon/core';
 import { Router, MakeRouteHandlerDecorator, RouteHandlerData, RouteGuard, ActivatedRoute } from '@uon/router';
 import { Validator, ValidationFailure } from '@uon/model';
 
@@ -41,7 +41,7 @@ export interface HttpRoute extends RouteHandlerData {
  * HttpRoute decorator for router endpoints 
  * @param meta 
  */
-export const HttpRoute = MakeUnique("@uon/http/HttpRoute", MakeRouteHandlerDecorator<HttpRoute>("HttpRoute"))
+export const HttpRoute = MakeRouteHandlerDecorator<HttpRoute>("HttpRoute");
 
 
 /**
@@ -54,7 +54,11 @@ export function MatchMethodFunc(rh: HttpRoute, d: any) {
     if (!rh.method)
         return true;
 
-    return rh.method.indexOf(d.method) > -1;
+    // normalize to an array so a string method does an exact match instead of a
+    // substring match (e.g. 'GET'.indexOf('E') used to match)
+    const methods = Array.isArray(rh.method) ? rh.method : [rh.method];
+
+    return methods.indexOf(d.method) > -1;
 }
 
 

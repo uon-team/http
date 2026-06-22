@@ -80,6 +80,10 @@ export function CorsGuard(options: CorsGuardOptions) {
                 origin
             );
 
+            // the response varies by Origin whenever it is reflected/checked,
+            // so caches don't serve one origin's ACAO to another
+            this.response.setHeader('Vary', 'Origin');
+
             // methods
             this.response.setHeader('Access-Control-Allow-Methods',
                 options.methods
@@ -129,8 +133,9 @@ export class CorsGuardService {
 
     checkOrigin(origins: '*' | string | string[], creds: boolean) {
 
-        const req_origin = this.request.headers.origin as string
-            || this.request.headers.host as string;
+        // only the Origin header drives CORS; never fall back to Host (which
+        // would reflect the server's own host as an allowed cross-origin)
+        const req_origin = this.request.headers.origin as string;
 
         if (req_origin) {
             if (origins === '*') {

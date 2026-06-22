@@ -201,21 +201,34 @@ export class HttpContext {
 
         const socket = this.request.socket;
 
+        // always have a valid reason phrase, even for unknown status codes
+        const reason = STATUS_CODES[code] || 'Unknown';
+
         if (socket.writable) {
 
-            message = message || STATUS_CODES[code] || '';
+            message = message || reason;
             headers = Object.assign({
                 'Connection': 'close',
                 'Content-type': 'text/plain',
                 'Content-Length': Buffer.byteLength(message)
             }, headers);
 
-            let res = socket.write(
-                `HTTP/1.1 ${code} ${STATUS_CODES[code]}\r\n` +
-                Object.keys(headers).map(h => `${h}: ${headers[h]}`).join('\r\n') +
-                '\r\n\r\n' +
-                message
-            );
+            // strip CR/LF from header values to prevent response-splitting /
+            // header injection via untrusted header values
+            const header_lines = Object.keys(headers)
+                .map(h => `${h}: ${String(headers[h]).replace(/[\r\n]/g, '')}`)
+                .join('\r\n');
+
+            // await the write so the bytes flush before we destroy the socket
+            await new Promise<void>((resolve) => {
+                socket.write(
+                    `HTTP/1.1 ${code} ${reason}\r\n` +
+                    header_lines +
+                    '\r\n\r\n' +
+                    message,
+                    () => resolve()
+                );
+            });
 
         }
 

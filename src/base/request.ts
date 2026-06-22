@@ -7,6 +7,12 @@ import { Socket } from "net";
 import { HttpError } from "../error/error";
 
 
+/**
+ * Hard upper bound on how many bytes the request body promise will buffer.
+ * This is a safety net against memory-exhaustion when a route reads
+ * `request.body` without a BodyGuard maxLength; it is deliberately generous.
+ */
+const MAX_BUFFERED_BODY_SIZE = 100 * 1024 * 1024; // 100 MB
 
 
 
@@ -33,7 +39,10 @@ export class IncomingRequest {
     }
 
     /**
-     * Whether the connection is secure or not (over https)
+     * Whether the connection is secure or not (over https).
+     *
+     * NOTE: this is derived from the `X-Forwarded-Proto` header when present,
+     * which a direct client can spoof. Only trust it behind a trusted proxy.
      */
     get secure(): boolean {
         return this._secure;
@@ -61,7 +70,10 @@ export class IncomingRequest {
     }
 
     /**
-     * The requester's ip address
+     * The requester's ip address.
+     *
+     * NOTE: this is taken from the first `X-Forwarded-For` entry when present,
+     * which a direct client can spoof. Only trust it behind a trusted proxy.
      */
     get clientIp() {
         return this._clientIp;
@@ -109,10 +121,21 @@ export class IncomingRequest {
 
             // start with an empty body
             let body: any[] = [];
+            let size = 0;
 
             // append chunks to the body as they come in
             this._request
                 .on('data', (chunk) => {
+
+                    size += chunk.length;
+
+                    // enforce a hard ceiling so an oversized/streamed body can't
+                    // exhaust memory when no maxLength guard is in place
+                    if (size > MAX_BUFFERED_BODY_SIZE) {
+                        reject(new HttpError(413, new Error(`Request body exceeds the ${MAX_BUFFERED_BODY_SIZE} byte limit.`)));
+                        this._request.destroy();
+                        return;
+                    }
 
                     body.push(chunk);
 
@@ -146,10 +169,13 @@ export class IncomingRequest {
             this._clientIp = ff.split(',').map(f => f.trim())[0];
         }
 
-        // check the original protocol for https
+        // check the original protocol for https. NOTE: X-Forwarded-* headers are
+        // trusted as-is; only enable behind a trusted proxy (see README).
         if (real_proto) {
-            this._uri.protocol = real_proto;
-            this._secure = real_proto.indexOf('https') === 0;
+            const proto = real_proto.split(',')[0].trim();
+            this._secure = proto.indexOf('https') === 0;
+            // keep the trailing colon consistent with ParseUrl ('https:'/'http:')
+            this._uri.protocol = this._secure ? 'https:' : 'http:';
         }
     }
 

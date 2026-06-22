@@ -38,20 +38,17 @@ export class Authorization {
     constructor(private request: IncomingRequest) {
 
         let auth_header = request.headers['authorization'];
-        if (typeof auth_header === 'string') {
+        // require a "<scheme> <token>" shape; a header with no space is malformed
+        if (typeof auth_header === 'string' && auth_header.indexOf(' ') > -1) {
 
             let str = auth_header as string;
             let start = str.indexOf(' ');
-            let scheme = str.substr(0, start).toLowerCase();
 
             // assign scheme
-            this._scheme = scheme;
+            this._scheme = str.substr(0, start).toLowerCase();
 
-            // parse the token
-            let token_str = Unquote(str.substr(start).trim());
-
-            // assign raw token
-            this._token = token_str;
+            // parse + assign the token
+            this._token = Unquote(str.substr(start).trim());
 
         }
 
@@ -91,11 +88,16 @@ export class Authorization {
         }
 
         let decoded = Buffer.from(this._token, 'base64').toString('utf8');
-        let parts = decoded.split(':');
+
+        // split on the FIRST colon only — a password may itself contain colons
+        let sep = decoded.indexOf(':');
+        if (sep === -1) {
+            return { username: decoded, password: '' };
+        }
 
         return {
-            username: parts[0],
-            password: parts[1]
+            username: decoded.slice(0, sep),
+            password: decoded.slice(sep + 1)
         };
 
     }
@@ -119,8 +121,14 @@ export class Authorization {
         if (this._config) {
 
             response.statusCode = 401;
+
+            // charset is optional; only append it when configured
+            const charset = this._config.charset
+                ? `, charset=${this._config.charset.toUpperCase()}`
+                : '';
+
             response.setHeader('WWW-Authenticate',
-                `${this._config.scheme} realm="${this._config.realm}", charset=${this._config.charset.toUpperCase()}`)
+                `${this._config.scheme} realm="${this._config.realm}"${charset}`)
 
         }
 

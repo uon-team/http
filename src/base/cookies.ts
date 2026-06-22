@@ -128,8 +128,10 @@ export class Cookies implements IOutgoingReponseModifier {
             cs.push(this._set[key]);
         }
 
-        // set the header's Set-Cookie field with the array
-        response.setHeader('Set-Cookie', cs);
+        // only emit Set-Cookie when there is at least one cookie to set
+        if (cs.length) {
+            response.setHeader('Set-Cookie', cs);
+        }
 
     }
 
@@ -165,7 +167,14 @@ export class Cookies implements IOutgoingReponseModifier {
 
             // only assign once
             if (this._get[key] == undefined) {
-                this._get[key] = decodeURIComponent(val);
+                // a malformed percent-encoding would throw and crash the request;
+                // fall back to the raw value instead
+                try {
+                    this._get[key] = decodeURIComponent(val);
+                }
+                catch (ex) {
+                    this._get[key] = val;
+                }
             }
 
         }
