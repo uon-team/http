@@ -1,6 +1,6 @@
 {
     "name": "@uon/http",
-    "version": "1.0.8",
+    "version": "1.1.0",
     "description": "Framework for building precise REST applications",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

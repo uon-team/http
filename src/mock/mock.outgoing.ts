@@ -7,16 +7,16 @@ import { Socket } from 'net';
 export class MockOutgoingResponse extends Transform {
 
     public statusCode: number = 200;
-    public statusMessage: string = STATUS_CODES[200];
+    public statusMessage: string = STATUS_CODES[200]!;
     public finished: boolean = false;
 
-    upgrading: boolean;
-    chunkedEncoding: boolean;
-    shouldKeepAlive: boolean;
-    useChunkedEncodingByDefault: boolean;
-    sendDate: boolean;
-    headersSent: boolean;
-    connection: Socket;
+    upgrading!: boolean;
+    chunkedEncoding!: boolean;
+    shouldKeepAlive!: boolean;
+    useChunkedEncodingByDefault!: boolean;
+    sendDate!: boolean;
+    headersSent!: boolean;
+    connection!: Socket;
 
     private _responseData: any[] = [];
     private _headers: OutgoingHttpHeaders = {};
@@ -35,14 +35,15 @@ export class MockOutgoingResponse extends Transform {
 
     _transform(chunk: any, encoding: string, callback: TransformCallback) {
 
-        this.push(chunk, encoding);
+        this.push(chunk, encoding as BufferEncoding);
         this._responseData.push(chunk);
         callback();
     }
 
-    end() {
-        super.end(...arguments);
+    end(...args: any[]): this {
+        (super.end as any)(...args);
         this.finished = true;
+        return this;
     }
 
     setHeader(name: string, value: string | string[]) {

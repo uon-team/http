@@ -26,14 +26,14 @@ export interface RangeConfigureOptions {
 @Injectable()
 export class Range implements IOutgoingReponseModifier {
 
-    private _start: number;
-    private _end: number;
+    private _start?: number;
+    private _end?: number;
 
     private _acceptRangeRequest: boolean = false;
-    private _chunkSize: number;
-    private _totalSize: number;
+    private _chunkSize!: number;
+    private _totalSize!: number;
 
-    private _options: RangeConfigureOptions;
+    private _options!: RangeConfigureOptions;
 
 
     /**

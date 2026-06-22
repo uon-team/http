@@ -7,9 +7,9 @@ import { ModelValidationResult, ValidationResult } from '@uon/model';
  */
 export class RequestBody<T = any> {
 
-    private _data: T;
-    private _raw: Buffer;
-    private _validation: ModelValidationResult<T>;
+    private _data!: T;
+    private _raw!: Buffer;
+    private _validation!: ModelValidationResult<T>;
 
     /**
      * The unparsed body buffer

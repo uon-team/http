@@ -6,18 +6,18 @@ import { Socket } from 'net';
 
 export class MockIncomingMessage extends Transform {
 
-    private _failError: Error;
+    private _failError?: Error;
     private _headers: IncomingHttpHeaders = {};
     private _rawHeaders: string[] = [];
 
-    httpVersion: string;
-    httpVersionMajor: number;
-    httpVersionMinor: number;
-    connection: Socket;
-    socket: Socket;
-    trailers: { [key: string]: string | undefined };
-    rawTrailers: string[];
-    aborted: boolean;
+    httpVersion!: string;
+    httpVersionMajor!: number;
+    httpVersionMinor!: number;
+    connection!: Socket;
+    socket!: Socket;
+    trailers!: { [key: string]: string | undefined };
+    rawTrailers!: string[];
+    aborted!: boolean;
 
     constructor(readonly url: string,
         readonly method: string,

@@ -30,9 +30,9 @@ describe('ParseWeightedValuesString', () => {
 
 @Model()
 class Query {
-    @Member() s: string;
-    @Member() n: number;
-    @Member() b: boolean;
+    @Member() s!: string;
+    @Member() n!: number;
+    @Member() b!: boolean;
 }
 
 describe('TryCoerceToModel / CoerceToType', () => {

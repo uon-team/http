@@ -34,7 +34,7 @@ export interface JsonResponseConfig {
 export class OutgoingResponse {
 
     private _modifiers: IOutgoingReponseModifier[] = [];
-    private _inputStream: Stream;
+    private _inputStream!: Stream;
 
     private _statusCode: number = 200;
     private _headers: OutgoingHttpHeaders = {};
@@ -120,7 +120,7 @@ export class OutgoingResponse {
         if (data != null) {
             // create readable stream from data
             let readable = new Readable();
-            readable.push(data, encoding);
+            readable.push(data, encoding as BufferEncoding);
             readable.push(null);
 
             // stream response
@@ -165,7 +165,7 @@ export class OutgoingResponse {
 
             let result: string = typeof payload === 'string'
                 ? payload
-                : JSON.stringify(options.keep ? Filter(payload, options.keep) : payload, null, options.pretty ? '\t' : null);
+                : JSON.stringify(options.keep ? Filter(payload, options.keep) : payload, null, options.pretty ? '\t' : undefined);
 
             // prefix output if specified in options
             if (options.prefixOutput) {

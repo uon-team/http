@@ -30,7 +30,7 @@ export function CreateHttpAwsLambdaHandler(app: Application) {
             method: event.httpMethod,
             url: event.path,
             headers: req_headers,
-            body: req_body
+            body: req_body ?? undefined
         });
 
         let single_headers: { [k: string]: string } = {};

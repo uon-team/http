@@ -23,16 +23,16 @@ const MAX_BUFFERED_BODY_SIZE = 100 * 1024 * 1024; // 100 MB
 export class IncomingRequest {
 
     private _uri: Url;
-    private _clientIp: string;
+    private _clientIp: string | null;
     private _secure: boolean;
 
    // private _query: any;
-    private _body: Promise<Buffer>;
+    private _body!: Promise<Buffer>;
 
     constructor(private _request: IncomingMessage) {
 
         this._uri = ParseUrl(_request);
-        this._clientIp = _request.socket ? _request.socket.remoteAddress : null;
+        this._clientIp = _request.socket?.remoteAddress ?? null;
         this._secure = _request.connection instanceof TLSSocket;
 
         this.parseForwardedHeaders();
@@ -189,7 +189,7 @@ export class IncomingRequest {
  */
 function ParseUrl(req: IncomingMessage) {
 
-    let uri = UrlParse(req.url, true);
+    let uri = UrlParse(req.url || '', true);
 
     let host_parts = req.headers.host ? req.headers.host.split(':') : [null, null];
     let host = host_parts[0];

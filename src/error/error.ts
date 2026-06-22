@@ -16,7 +16,7 @@ export class HttpError extends Error {
     /**
      * The originating error
      */
-    readonly error: Error;
+    readonly error?: Error;
 
     /**
      * Some data attached to the HttpError

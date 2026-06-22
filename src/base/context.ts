@@ -59,11 +59,11 @@ export class HttpContext {
 
     readonly request: IncomingRequest;
     readonly response: OutgoingResponse;
-    readonly uri: Url;
-    readonly head: Buffer;
+    readonly uri!: Url;
+    readonly head?: Buffer;
 
     private _root: Injector;
-    private _injector: Injector;
+    private _injector!: Injector;
     private _providers: Provider[];
     private _processing: boolean = false;
 
@@ -90,7 +90,7 @@ export class HttpContext {
     /**
      * Process the matching routes
      */
-    async process(match: RouteMatch) {
+    async process(match: RouteMatch | null) {
 
         // fool guard
         if (this._processing) {
@@ -133,7 +133,7 @@ export class HttpContext {
      * Process an HttpError
      * @param error 
      */
-    async processError(match: RouteMatch, error: HttpError) {
+    async processError(match: RouteMatch | null, error: HttpError) {
 
         // if the controller has a onHttpError method, we use that
         if (match && match.outlet.prototype.onHttpError) {
@@ -172,7 +172,7 @@ export class HttpContext {
         const protocol = this.request.headers.upgrade.toLowerCase();
 
         // select the corresponding upgrade handler
-        let handler: HttpUpgradeHandler<T>;
+        let handler: HttpUpgradeHandler<T> | undefined;
         for (let i = 0; i < handlers.length; ++i) {
             if (handlers[i].protocol === protocol) {
                 handler = handlers[i];
@@ -240,7 +240,7 @@ export class HttpContext {
      * Get the provider list for this context's injector
      * @param match 
      */
-    private getProviderList(match: RouteMatch) {
+    private getProviderList(match: RouteMatch | null) {
 
         // we need a list of providers before we create an injector
         // start with this for a start

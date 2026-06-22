@@ -26,8 +26,8 @@ export interface ExpiresOptions {
 export class Expires implements IOutgoingReponseModifier {
 
 
-    readonly ifModifiedSince: Date;
-    private _options: ExpiresOptions;
+    readonly ifModifiedSince?: Date;
+    private _options!: ExpiresOptions;
 
 
     constructor(private request: IncomingRequest) {

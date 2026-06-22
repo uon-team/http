@@ -24,7 +24,7 @@ import { FindModelAnnotation, ID } from '@uon/model';
 import { Readable } from 'stream';
 
 
-const ROUTER_MATCH_FUNCS = [MatchMethodFunc];
+const ROUTER_MATCH_FUNCS = [MatchMethodFunc as (rh: any, d: any) => boolean];
 
 
 export interface MockRequestOptions {
@@ -54,10 +54,10 @@ export interface ResponseEvent {
 @Injectable()
 export class HttpServer extends EventSource {
 
-    private _started: boolean;
+    private _started: boolean = false;
 
-    private _http: Server;
-    private _https: https.Server;
+    private _http!: Server;
+    private _https!: https.Server;
 
     private _contextProviders: Provider[];
 
@@ -80,7 +80,7 @@ export class HttpServer extends EventSource {
             }
         }
 
-        this._contextProviders = providers.concat(config.providers);
+        this._contextProviders = providers.concat(config.providers || []);
 
     }
 
@@ -176,7 +176,7 @@ export class HttpServer extends EventSource {
     async mockRequest(options: MockRequestOptions) {
 
         // fetch the root http router
-        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
+        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken!);
 
         // create mock request object
         const mock_req = new MockIncomingMessage(options.url, options.method, options.headers || {}, options.body);
@@ -185,7 +185,7 @@ export class HttpServer extends EventSource {
         // create mock response object
         const mock_res = new MockOutgoingResponse();
 
-        const pathname = ParseUrl(options.url, false).pathname;
+        const pathname = ParseUrl(options.url, false).pathname || '';
         const method = options.method.toUpperCase();
 
         // get match
@@ -198,8 +198,8 @@ export class HttpServer extends EventSource {
         const http_context = new HttpContext({
             injector: root_injector,
             providers: this._contextProviders,
-            req: mock_req,
-            res: mock_res,
+            req: mock_req as any,
+            res: mock_res as any,
             traceErrors: this.config.traceContextErrors
         });
 
@@ -218,11 +218,11 @@ export class HttpServer extends EventSource {
 
             // make sure a response was sent
             if (!http_context.response.sent) {
-                console.error(`RouterOutlet ${match.outlet.name}.${match.handler.methodKey} did not provide a response.`);
+                console.error(`RouterOutlet ${match?.outlet?.name}.${match?.handler?.methodKey} did not provide a response.`);
                 throw new HttpError(501);
             }
         }
-        catch (ex) {
+        catch (ex: any) {
 
             // must be HttpError from this point
             let error = ex instanceof HttpError
@@ -256,7 +256,7 @@ export class HttpServer extends EventSource {
             this.handleRequest.bind(this));
 
         // start listening right away
-        this._http.listen(this.config.plainPort, this.config.host, (err: Error) => {
+        this._http.listen(this.config.plainPort, this.config.host, (err?: Error) => {
             if (err) {
                 throw err;
             }
@@ -278,7 +278,7 @@ export class HttpServer extends EventSource {
         if (this._https) {
             await new Promise<void>((resolve) => {
                 this._https.close(() => {
-                    this._https = null;
+                    this._https = null as any;
                     resolve();
                 });
             });
@@ -305,7 +305,7 @@ export class HttpServer extends EventSource {
         this._https.on('upgrade', this.handleConnectionUpgrade.bind(this));
 
         // listen to incoming connections
-        this._https.listen(this.config.port, this.config.host, (err: Error) => {
+        this._https.listen(this.config.port, this.config.host, (err?: Error) => {
             if (err) {
                 throw err;
             }
@@ -333,10 +333,10 @@ export class HttpServer extends EventSource {
         };
 
         // fetch the root http router
-        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
+        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken!);
 
 
-        const pathname = ParseUrl(req.url, false).pathname;
+        const pathname = ParseUrl(req.url || '', false).pathname || '';
         const method = req.method;
 
         // get match
@@ -381,16 +381,16 @@ export class HttpServer extends EventSource {
 
             // make sure a response was sent
             if (!http_context.response.sent) {
-                console.error(`RouterOutlet ${match.outlet.name}.${match.handler.methodKey} did not provide a response.`);
+                console.error(`RouterOutlet ${match?.outlet?.name}.${match?.handler?.methodKey} did not provide a response.`);
                 throw new HttpError(501);
             }
 
 
-            await this.emit('response', <ResponseEvent>{ context: http_context, error: null, timing: request_timing });
+            await this.emit('response', <ResponseEvent>{ context: http_context, error: undefined, timing: request_timing });
 
 
         }
-        catch (ex) {
+        catch (ex: any) {
 
             if (request_timing.process == -1) {
                 request_timing.process = HRTimeToMs(process.hrtime(start_time));
@@ -427,7 +427,7 @@ export class HttpServer extends EventSource {
 
     }
 
-    private async trySendResponseData(context: HttpContext, match: RouteMatch, data: any) {
+    private async trySendResponseData(context: HttpContext, match: RouteMatch | null, data: any) {
 
         if (data) {
 
@@ -454,12 +454,12 @@ export class HttpServer extends EventSource {
         const router: Router<HttpRoute> = this.injector.get(HTTP_REDIRECT_ROUTER);
 
         // get matches
-        const matches = router.match(ParseUrl(req.url, false).pathname, { method: req.method }, ROUTER_MATCH_FUNCS);
+        const matches = router.match(ParseUrl(req.url || '', false).pathname || '', { method: req.method }, ROUTER_MATCH_FUNCS);
 
         // create a new context
         const http_context = new HttpContext({
             injector: this.injector,
-            providers: this.config.providers,
+            providers: this.config.providers || [],
             req: req,
             res: res
         });
@@ -485,10 +485,10 @@ export class HttpServer extends EventSource {
     private async handleConnectionUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
 
         // fetch the root http router
-        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken);
+        const router: Router<HttpRoute> = this.injector.get(this.config.routerToken!);
 
 
-        const pathname = ParseUrl(req.url, false).pathname;
+        const pathname = ParseUrl(req.url || '', false).pathname || '';
         const method = "UPGRADE";
 
         // get match
@@ -502,7 +502,7 @@ export class HttpServer extends EventSource {
             injector: root_injector,
             providers: this._contextProviders,
             req,
-            res: null,
+            res: null as any,
             head
         });
 
@@ -512,7 +512,7 @@ export class HttpServer extends EventSource {
             await context.process(match);
 
         }
-        catch (ex) {
+        catch (ex: any) {
 
             let error = ex instanceof HttpError
                 ? ex
@@ -523,7 +523,7 @@ export class HttpServer extends EventSource {
 
     }
 
-    private selectInjector(match: RouteMatch) {
+    private selectInjector(match: RouteMatch | null) {
 
         let root_injector = this.injector;
 

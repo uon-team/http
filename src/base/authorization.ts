@@ -30,10 +30,10 @@ const WWW_AUTH_CONFIG_DEFAULT: WWWAuthenticateConfig = {
 @Injectable()
 export class Authorization {
 
-    private _scheme: string;
-    private _token: string;
+    private _scheme!: string;
+    private _token!: string;
 
-    private _config: WWWAuthenticateConfig;
+    private _config!: WWWAuthenticateConfig;
 
     constructor(private request: IncomingRequest) {
 
@@ -81,7 +81,7 @@ export class Authorization {
      * Will return null if the scheme was not set to Basic in 
      * the authorization request header
      */
-    decodeBasicCredentials(): BasicCredentials {
+    decodeBasicCredentials(): BasicCredentials | null {
 
         if (this._scheme !== 'basic') {
             return null;
