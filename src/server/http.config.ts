@@ -1,6 +1,7 @@
 import { Provider, InjectionToken } from '@uon/core';
 import { Router } from '@uon/router';
 import { HTTP_ROUTER } from './http.router';
+import { HttpModelAdapter } from '../model/model.adapter';
 
 
 
@@ -48,6 +49,13 @@ export interface HttpConfig {
      * Starts the module without starting an http server
      */
     serverless?: boolean;
+
+    /**
+     * Adapter for model validation / formatting / (de)serialization used by the
+     * guards. Lets you swap @uon/model for a different model library.
+     * Defaults to the @uon/model implementation (UonModelAdapter).
+     */
+    modelAdapter?: HttpModelAdapter;
 
 }
 

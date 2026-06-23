@@ -20,7 +20,6 @@ import { MockIncomingMessage } from '../mock/mock.incoming';
 import { MockOutgoingResponse } from '../mock/mock.outgoing';
 
 import { HttpError } from '../error/error';
-import { FindModelAnnotation, ID } from '@uon/model';
 import { Readable } from 'stream';
 
 

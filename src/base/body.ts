@@ -1,4 +1,4 @@
-import { ModelValidationResult, ValidationResult } from '@uon/model';
+import { HttpModelValidationResult } from '../model/validation';
 
 /**
  * Access to the request body
@@ -9,7 +9,7 @@ export class RequestBody<T = any> {
 
     private _data!: T;
     private _raw!: Buffer;
-    private _validation!: ModelValidationResult<T>;
+    private _validation!: HttpModelValidationResult<T>;
 
     /**
      * The unparsed body buffer
@@ -28,7 +28,7 @@ export class RequestBody<T = any> {
     /**
      * The result of the validation 
      */
-    get validation(): ModelValidationResult<T> {
+    get validation(): HttpModelValidationResult<T> {
         return this._validation;
     }
 }

@@ -17,6 +17,10 @@ export * from './base/request';
 export * from './base/response';
 export * from './base/range';
 
+export * from './model/validation';
+export * from './model/model.adapter';
+export * from './model/uon.adapter';
+
 export * from './error/error';
 export * from './error/text.handler';
 export * from './error/json.handler';

@@ -1,4 +1,4 @@
-import { ValidationResult } from '@uon/model';
+import { HttpValidationResult } from '../model/validation';
 import { Injectable } from '@uon/core';
 import { IncomingRequest } from './request';
 import { ParsedUrlQuery } from 'querystring';
@@ -12,7 +12,7 @@ export class RequestQuery<T = any> {
 
     private _data!: T;
     private _raw: ParsedUrlQuery;
-    private _validation!: ValidationResult<T>;
+    private _validation!: HttpValidationResult<T>;
 
 
     constructor(private _request: IncomingRequest) {
@@ -37,7 +37,7 @@ export class RequestQuery<T = any> {
     /**
      * The result of the validation 
      */
-    get validation(): ValidationResult<T> {
+    get validation(): HttpValidationResult<T> {
         return this._validation;
     }
 

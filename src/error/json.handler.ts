@@ -7,7 +7,7 @@ import { Injectable, InjectionToken } from "@uon/core";
 import { IncomingRequest } from "../base/request";
 import { OutgoingResponse } from "../base/response";
 import { HttpError, HttpErrorHandler } from "./error";
-import { ModelValidationResult, ValidationResult } from '@uon/model';
+import { IsValidationResult, FlattenValidationResult } from '../model/validation';
 
 
 /**
@@ -28,11 +28,11 @@ export class HttpErrorJsonHandler implements HttpErrorHandler {
         this.res.statusCode = err.code;
         let data: any = err.toJSON();
 
-        if (err.data instanceof ModelValidationResult) {
+        if (IsValidationResult(err.data)) {
 
             let results: any = {
                 type: err.data.key,
-                errors: err.data.flatten()
+                errors: FlattenValidationResult(err.data)
             };
 
             data = results;

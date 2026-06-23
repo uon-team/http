@@ -7,6 +7,8 @@ import { HttpConfig, HTTP_CONFIG, HTTP_CONFIG_DEFAULTS } from './server/http.con
 import { HTTP_PROVIDERS, DEFAULT_CONTEXT_PROVIDERS } from './server/http.providers';
 
 import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, HttpRoute } from './server/http.router';
+import { HTTP_MODEL_ADAPTER } from './model/model.adapter';
+import { DEFAULT_MODEL_ADAPTER } from './model/uon.adapter';
 
 
 @Module({
@@ -15,6 +17,10 @@ import { HTTP_ROUTER, HTTP_REDIRECT_ROUTER, HttpRoute } from './server/http.rout
         {
             token: HTTP_CONFIG,
             value: HTTP_CONFIG_DEFAULTS
+        },
+        {
+            token: HTTP_MODEL_ADAPTER,
+            value: DEFAULT_MODEL_ADAPTER
         },
         {
             token: HTTP_ROUTER,
@@ -54,6 +60,10 @@ export class HttpModule {
                 {
                     token: HTTP_CONFIG,
                     value: merged_config
+                },
+                {
+                    token: HTTP_MODEL_ADAPTER,
+                    value: merged_config.modelAdapter || DEFAULT_MODEL_ADAPTER
                 },
                 {
                     token: HTTP_PROVIDERS,

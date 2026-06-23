@@ -1,6 +1,6 @@
-import { Validator, ValidationFailure, ModelValidationResult, ValidationResult } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 import { HttpError } from '../error/error';
+import { HttpValidatorMap, HttpModelValidationResult, RunValidators } from '../model/validation';
 
 
 
@@ -8,44 +8,13 @@ import { HttpError } from '../error/error';
 /**
  * Validate route params
  */
-export function RouteParamsGuard(validators: { [k: string]: Validator[] }) {
+export function RouteParamsGuard(validators: HttpValidatorMap) {
 
     return function _RouteParamsGuard(ar: ActivatedRoute<any>) {
 
-        const validate_keys = Object.keys(ar.params);
-        const errors: string[] = [];
-        const error_data: any = {};
+        const validation_results = new HttpModelValidationResult<any>('route_params');
 
-        const validation_results = new ModelValidationResult<any>('route_params');
-
-        for (let i = 0; i < validate_keys.length; ++i) {
-            const k = validate_keys[i];
-
-            // check the required fields
-            if (validators[k]) {
-
-                validators[k].forEach((v) => {
-
-                    try {
-                        v(ar.params, k, ar.params[k])
-                    }
-                    catch (err) {
-
-                        // don't swallow unexpected (non-validation) errors
-                        if (!(err instanceof ValidationFailure)) {
-                            throw err;
-                        }
-
-                        if (!validation_results.children[k]) {
-                            validation_results.children[k] = new ValidationResult<any>(k);
-                        }
-
-                        validation_results.children[k].failures.push(err);
-                    }
-                });
-            }
-
-        }
+        RunValidators(ar.params, validators, validation_results);
 
         if (!validation_results.valid) {
             throw new HttpError(422, new Error('route parameters validation failure'), validation_results);

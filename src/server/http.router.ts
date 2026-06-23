@@ -1,7 +1,6 @@
 
 import { InjectionToken, Injectable } from '@uon/core';
 import { Router, MakeRouteHandlerDecorator, RouteHandlerData, RouteGuard, ActivatedRoute } from '@uon/router';
-import { Validator, ValidationFailure } from '@uon/model';
 
 import { IncomingRequest } from '../base/request';
 import { RequestQuery } from '../base/query';

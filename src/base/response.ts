@@ -1,6 +1,8 @@
 import { OutgoingMessage, OutgoingHttpHeaders, ServerResponse } from "http";
 import { Writable, Stream, Readable } from "stream";
 
+import { HttpModelAdapter } from "../model/model.adapter";
+
 
 export interface IOutgoingReponseModifier {
     modifyResponse(res: OutgoingResponse): Promise<any>;
@@ -41,11 +43,24 @@ export class OutgoingResponse {
 
     private _finishing: boolean = false;
 
+    private _modelAdapter?: HttpModelAdapter;
+
     /**
      * Creates a new server response wrapper
-     * @param _response 
+     * @param _response
      */
     constructor(private _response: ServerResponse) { }
+
+
+    /**
+     * Sets the model adapter used to map model values to JSON values in json().
+     * Called by HttpContext; you don't normally need to call this yourself.
+     * @param adapter
+     */
+    setModelAdapter(adapter: HttpModelAdapter) {
+        this._modelAdapter = adapter;
+        return this;
+    }
 
 
     get isNull() {
@@ -163,9 +178,17 @@ export class OutgoingResponse {
 
         const func = async (res: OutgoingResponse) => {
 
-            let result: string = typeof payload === 'string'
-                ? payload
-                : JSON.stringify(options.keep ? Filter(payload, options.keep) : payload, null, options.pretty ? '\t' : undefined);
+            let result: string;
+            if (typeof payload === 'string') {
+                // already-serialized json string, pass through
+                result = payload;
+            }
+            else {
+                // map model values to plain JSON values (via the configured
+                // model adapter) before stringifying; non-model values pass through
+                const data = this._modelAdapter ? this._modelAdapter.serialize(payload) : payload;
+                result = JSON.stringify(options.keep ? Filter(data, options.keep) : data, null, options.pretty ? '\t' : undefined);
+            }
 
             // prefix output if specified in options
             if (options.prefixOutput) {

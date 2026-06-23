@@ -7,6 +7,7 @@ import { HttpError } from '../error/error';
 import { OutgoingResponse } from './response';
 import { IncomingRequest } from './request';
 import { HttpErrorHandler, HTTP_ERROR_HANDLER } from '../error/error';
+import { HTTP_MODEL_ADAPTER } from '../model/model.adapter';
 
 /**
  * Multi provider token for upgrade handlers
@@ -82,6 +83,13 @@ export class HttpContext {
 
         this.request = new IncomingRequest(options.req);
         this.response = new OutgoingResponse(options.res);
+
+        // wire the configured model adapter into the response so json() can map
+        // model values to JSON values before stringifying
+        const model_adapter = this._root.get(HTTP_MODEL_ADAPTER, null);
+        if (model_adapter) {
+            this.response.setModelAdapter(model_adapter);
+        }
 
         this.head = options.head;
         this._traceErrors = !!options.traceErrors;

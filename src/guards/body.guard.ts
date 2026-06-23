@@ -1,9 +1,10 @@
-import { Injectable, Injector } from '@uon/core';
+import { Injectable, Inject, Injector } from '@uon/core';
 import { ActivatedRoute } from '@uon/router';
 
 import { HttpError } from '../error/error';
 import { RequestBody } from '../base/body';
 import { IncomingRequest } from '../base/request';
+import { HTTP_MODEL_ADAPTER, HttpModelAdapter } from '../model/model.adapter';
 
 /**
  * Configuration options for the request body
@@ -51,7 +52,8 @@ export class BodyGuardService {
 
     constructor(public request: IncomingRequest,
         public body: RequestBody,
-        public injector: Injector) { }
+        public injector: Injector,
+        @Inject(HTTP_MODEL_ADAPTER) public adapter: HttpModelAdapter) { }
 
     checkHeaders(config: BodyGuardConfig) {
 

@@ -1,15 +1,15 @@
 import { PropertyNamesNotOfType, Type } from '@uon/core';
-import { Model, JsonSerializer, FindModelAnnotation, Validate, ModelValidationResult, Validator, ApplyFormatting } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 
 import { BodyGuardService } from './body.guard';
 import { HttpError } from '../error/error';
+import { HttpValidator, HttpModelValidationResult } from '../model/validation';
 
 
 
 export type JsonBodyGuardValidate<T, M = Pick<T, PropertyNamesNotOfType<T, Function>>> = {
-    [K in keyof M]?: Validator[]
-} & { [k: string]: Validator[] }
+    [K in keyof M]?: HttpValidator[]
+} & { [k: string]: HttpValidator[] }
 
 export interface JsonBodyGuardOptions<T> {
 
@@ -51,19 +51,6 @@ export interface JsonBodyGuardOptions<T> {
  */
 export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T> = {}) {
 
-
-    let model_meta: Model;
-    let serializer: JsonSerializer<T>;
-    if (type) {
-        model_meta = FindModelAnnotation(type);
-        if (!model_meta) {
-            throw new Error(`You must provide a @Model decorated type, ${type.name} was not.`);
-        }
-
-        serializer = new JsonSerializer(type);
-    }
-
-
     return class _JsonBodyGuard extends BodyGuardService {
 
         async checkGuard(ar: ActivatedRoute<any>): Promise<boolean> {
@@ -92,8 +79,8 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
 
             const result = type
                 ? (Array.isArray(obj)
-                    ? (obj as any[]).map(o => serializer.deserialize(o, false))
-                    : serializer.deserialize(obj, false))
+                    ? (obj as any[]).map(o => this.adapter.deserialize(type, o))
+                    : this.adapter.deserialize(type, obj))
                 : obj;
 
             // assign data to the JsonBody provider
@@ -106,19 +93,19 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
             }
 
 
-            let validation_result: ModelValidationResult<any>;
+            let validation_result: HttpModelValidationResult<any>;
 
             if (is_array) {
                 const subject = this.body.value as any[];
-                validation_result = new ModelValidationResult<any>('body');
+                validation_result = new HttpModelValidationResult<any>('body');
 
                 for (let i = 0; i < subject.length; ++i) {
-                    const item_result = await Validate(subject[i], options.validate, this.injector, String(i));
+                    const item_result = await this.adapter.validate(subject[i], options.validate, this.injector, String(i));
                     validation_result.children[i] = item_result;
                 }
             }
             else {
-                validation_result = await Validate(this.body.value, options.validate, this.injector, 'body');
+                validation_result = await this.adapter.validate(this.body.value, options.validate, this.injector, 'body');
             }
 
             if (options.throwOnValidation !== false && !validation_result.valid) {
@@ -135,11 +122,11 @@ export function JsonBodyGuard<T>(type?: Type<T>, options: JsonBodyGuardOptions<T
                 if (is_array) {
                     const subject = this.body.value as any[];
                     for (let i = 0; i < subject.length; ++i) {
-                        ApplyFormatting(subject[i]);
+                        this.adapter.applyFormatting(subject[i]);
                     }
                 }
                 else {
-                    ApplyFormatting(this.body.value);
+                    this.adapter.applyFormatting(this.body.value);
                 }
             }
 

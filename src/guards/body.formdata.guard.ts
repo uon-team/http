@@ -1,12 +1,11 @@
 import { Type } from '@uon/core';
-import { Validator, Validate, Model, JsonSerializer, FindModelAnnotation, GetModelMembers, ApplyFormatting } from '@uon/model';
 import { ActivatedRoute } from '@uon/router';
 import { parse as ParseFormData } from 'querystring'
 
 
 import { HttpError } from '../error/error';
 import { BodyGuardService } from './body.guard';
-import { TryCoerceToModel } from '../base/utils';
+import { HttpValidator } from '../model/validation';
 
 
 
@@ -16,7 +15,7 @@ export interface FormDataBodyGuardOptions {
      * Extra validation on top of model validation.
      * Can be used if no model is provided.
      */
-    validate?: { [k: string]: Validator[] };
+    validate?: { [k: string]: HttpValidator[] };
 
 
     /**
@@ -43,19 +42,6 @@ export interface FormDataBodyGuardOptions {
  */
 export function FormDataBodyGuard<T>(type?: Type<T>, options: FormDataBodyGuardOptions = {}) {
 
-
-    let model_meta: Model;
-    let serializer: JsonSerializer<T>;
-    if (type) {
-        model_meta = FindModelAnnotation(type);
-        if (!model_meta) {
-            throw new Error(`You must provide a @Model decorated type, ${type.name} was not.`);
-        }
-
-        serializer = new JsonSerializer(type);
-    }
-
-
     return class _FormDataBodyGuard extends BodyGuardService {
 
         async checkGuard(ar: ActivatedRoute<any>): Promise<boolean> {
@@ -76,7 +62,7 @@ export function FormDataBodyGuard<T>(type?: Type<T>, options: FormDataBodyGuardO
             // parse form data
             const parsed = ParseFormData(buffer.toString('utf8'), '&', '=')
             const result = type
-                ? serializer.deserialize(TryCoerceToModel(GetModelMembers(model_meta), parsed))
+                ? this.adapter.deserializeFromString(type, parsed)
                 : parsed;
 
             json_body._data = result;
@@ -84,7 +70,7 @@ export function FormDataBodyGuard<T>(type?: Type<T>, options: FormDataBodyGuardO
             //console.log(buffer.toString('utf8'), result);
 
             // run validation
-            const validation_result = await Validate(json_body.value, options.validate, this.injector, 'body');
+            const validation_result = await this.adapter.validate(json_body.value, options.validate, this.injector, 'body');
 
             if (options.throwOnValidation !== false && !validation_result.valid) {
                 throw new HttpError(422,
@@ -96,7 +82,7 @@ export function FormDataBodyGuard<T>(type?: Type<T>, options: FormDataBodyGuardO
 
             // run formatting
             if (type) {
-                ApplyFormatting(result);
+                this.adapter.applyFormatting(result);
             }
 
             return true;

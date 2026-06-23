@@ -45,6 +45,7 @@ Application.Bootstrap(MyAppModule).start();
 | `traceContextErrors` | `console.error` errors thrown from outlets. |
 | `routerToken` | Which router token requests are matched against (defaults to `HTTP_ROUTER`). |
 | `serverless` | Run without listening on a socket (for `mockRequest` / lambda). |
+| `modelAdapter` | Model layer used by the guards (validation / formatting / (de)serialization). Defaults to the `@uon/model` implementation — see [Pluggable model layer](#pluggable-model-layer). |
 
 ## Routing
 
@@ -133,6 +134,51 @@ XSSI guard), `keep` (whitelist of keys to emit).
 
 `RequestBody` / `RequestQuery` expose `.raw`, `.value` (coerced) and
 `.validation`.
+
+### Pluggable model layer
+
+The guards don't talk to `@uon/model` directly — they go through an
+`HttpModelAdapter` resolved from the `HTTP_MODEL_ADAPTER` token. The default
+adapter (`UonModelAdapter`) wraps `@uon/model`, so out of the box everything
+behaves as before. To use a different model/validation library, implement the
+interface and pass it as `modelAdapter`:
+
+```typescript
+import { HttpModelAdapter, HttpModelValidationResult, HttpModule } from '@uon/http';
+
+class MyModelAdapter implements HttpModelAdapter {
+    isModel(type)                    { /* is `type` a model you handle? */ }
+    deserialize(type, data)          { /* already-parsed JSON object -> instance */ }
+    deserializeFromString(type, raw) { /* coerce a string-keyed map (query/form) -> instance */ }
+    serialize(value)                 { /* instance -> JSON-ready value, before JSON.stringify() */ }
+    async validate(subject, validators, injector, key) {
+        // ...run validation, return an HttpModelValidationResult-shaped result
+        return new HttpModelValidationResult(key);
+    }
+    applyFormatting(subject)         { /* mutate `subject` in place, or no-op */ }
+}
+
+@Module({
+    imports: [HttpModule.WithConfig({ modelAdapter: new MyModelAdapter() })],
+})
+export class MyAppModule {}
+```
+
+The adapter only covers the operations that depend on the model library. The
+result/failure/validator shapes are owned by `@uon/http` and are
+library-agnostic — exported alongside the helpers that operate on them:
+
+- `HttpValidationResult` / `HttpModelValidationResult` — the result types
+  (`key`, `failures`, `children`, and a computed `valid`). Your adapter's
+  `validate` must return something satisfying `HttpModelValidationResult`, and
+  your validators must throw `HttpValidationFailure`-shaped objects.
+- `HttpValidator` / `HttpValidatorMap` — the validator function shape used in
+  guard `validate` options.
+- `RunValidators(params, validators, result)` — runs validators and collects
+  failures (used by `RouteParamsGuard`; needs no adapter).
+- `FlattenValidationResult(result)` — flattens a result tree to `{ path, errors }`
+  entries for an error body (used by `HttpErrorJsonHandler`).
+- `IsValidationResult(x)` — structural guard for validation results.
 
 ## CORS
 
